@@ -1,0 +1,382 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Symfony Doctrine Database Session Storage - Design Disclosure - Portfolio & Personal Blog of Alistair Stead</title>
+  <meta name="author" content="Alistair Stead">
+
+  
+  <meta name="description" content="Sessions are normally managed by your server and depending upon how involved you get with the PHP setup you need never know how this data is stored. &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Design Disclosure - Portfolio & Personal Blog of Alistair Stead" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://coderwall.com/stylesheets/jquery.coderwall.css" media="all" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-287228-6']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/"><img src="/images/logo.png"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:alistairstead.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Symfony Doctrine Database Session Storage</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-11-30T22:23:00+00:00" pubdate data-updated="true">Nov 30<span>th</span>, 2009</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Sessions are normally managed by your server and depending upon how involved you get with the PHP setup you need never know how this data is stored. The default setup for PHP is to store session data in temporary files on the server. So why would we want to change how sessions are handled and what advantage can we gain from any changes we make.</p>
+
+<h2>Why use database session management?</h2>
+
+<p>Sessions allow you maintain persistence within PHP applications. With every HTTP request a PHP application must re-assign every variable and object needed in your application. Sessions allow you to store data that is required to persist past each HTTP request allowing it to be easily retrieved and used.</p>
+
+<!--more-->
+
+
+<p>Sessions are commonly used when creating a secure application, used to store the state of a user e.g. if they are logged in or credentials to control access to content.</p>
+
+<p>By storing session data in a database table you are able to create an application interface that will show information about the users that are logged in. This for example could show the number of users logged into the application or show administrators who is logged in.</p>
+
+<p>If you need to scale your application by adding more than one server, saving your session data in temporary files can lead to major problems. By using database storage you can optimise and unify the session storage, ensuring that session data is always available and consistent.</p>
+
+<p>Obviously there are other solutions for scalable session storage such as APC or MemCache but these solutions are for another post.</p>
+
+<h2>How to setup Doctrine database session storage</h2>
+
+<p>You first need to add a table to you database schema that will be used to store your session data. Although you can create this table manually, adding it to your scheme also created the model classes that you can later use to interact with the table data.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">Session</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">columns</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">id</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span> <span class="nv">type</span><span class="p-Indicator">:</span> <span class="nv">string(32)</span><span class="p-Indicator">,</span> <span class="nv">primary</span><span class="p-Indicator">:</span> <span class="nv">true</span><span class="p-Indicator">,</span> <span class="nv">notnull</span><span class="p-Indicator">:</span> <span class="nv">true</span> <span class="p-Indicator">}</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">data</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span> <span class="nv">type</span><span class="p-Indicator">:</span> <span class="nv">string(4000)</span><span class="p-Indicator">,</span> <span class="nv">notnull</span><span class="p-Indicator">:</span> <span class="nv">true</span> <span class="p-Indicator">}</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">time</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span> <span class="nv">type</span><span class="p-Indicator">:</span> <span class="nv">integer(4)</span><span class="p-Indicator">,</span> <span class="nv">notnull</span><span class="p-Indicator">:</span> <span class="nv">true</span> <span class="p-Indicator">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have added the table to your schema you can build your model and database:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>symfony doctrine:build-all
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You then need to configure your symfony application to use this table to store all session data. To do this you need to modify the factories.yml file for your application. Update your file to include the following lines:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">storage</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfPDOSessionStorage</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_table</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">session</span> <span class="c1"># Name of the table storing the sessions</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_id_col</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">id</span> <span class="c1"># The primary key column</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_data_col</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">data</span> <span class="c1"># The column where the session data will be stored</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_time_col</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">time</span> <span class="c1"># The column where the timestamp of the session will be stored</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">database</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doctrine</span> <span class="c1"># Name of the database connection to use</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have modifies your factories.yml file you will need to clear the symfony cache. After that your application should run exactly as it did before except that your users session data will be stored in the database table.</p>
+
+<p>The data column stores all the session data in a serialised form this is deserialized each time a user requests the data. There are many uses for this type of session storage and I hope this brief explanation helps you.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alistair Stead</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-11-30T22:23:00+00:00" pubdate data-updated="true">Nov 30<span>th</span>, 2009</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/php/'>PHP</a>, <a class='category' href='/blog/categories/symfony/'>Symfony</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage/" data-via="alistairstead" data-counturl="http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/2009/11/yui-connect-asynchronous-file-uploads/" title="Previous Post: YUI Connect asynchronous file uploads">&laquo; YUI Connect asynchronous file uploads</a>
+      
+      
+        <a class="basic-alignment right" href="/2009/11/symfony-apc-cache-and-memcache-session-storage/" title="next Post: Symfony APC Cache and Memcache Session Storage">Symfony APC Cache and Memcache Session Storage &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/2012/04/deploy-magento-with-capistrano/">Deploy Magento with Capistrano</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2012/02/updated-blog/">Updated Blog</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/package-and-install-your-latest-magento-1-5-extension/">Package and Install your latest Magento 1.5+ extension</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/testing-magento-checkout/">Testing Magento Checkout</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/02/magetool-update-v0-3-0/">MageTool Update v0.3.0</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <a href="http://www.phpconference.nl" title="DPC (Dutch PHP Conference) 2012"><img src="/images/dpc_block_speaker.png"></a>
+</section>
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("alistairstead", 5, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/alistairstead" class="twitter-follow-button" data-show-count="true">Follow @alistairstead</a>
+  
+</section>
+
+
+<section>
+  <h1>On Delicious</h1>
+  <div id="delicious"></div>
+  <script type="text/javascript" src="http://feeds.delicious.com/v2/json/threethirdsfull?count=5&amp;sort=date&amp;callback=renderDeliciousLinks"></script>
+  <p><a href="http://delicious.com/threethirdsfull">My Delicious Bookmarks &raquo;</a></p>
+</section>
+
+
+
+
+<section>
+<h1>Flickr</h1>
+<ul id="flickr">
+    <li class="loading">Flickr updating...</li>
+</ul>
+<script lang="Javascript">
+var flickrNickname = "alistairstead";
+function jsonFlickrApi(rsp) {
+    if (rsp.stat != "ok"){
+        return;
+     }
+     var list = "";
+     for (var i=0; i < rsp.photos.photo.length; i++) {
+         var photo    = rsp.photos.photo[i];
+         var imgUrl   = 'http://farm'+ photo.farm +'.static.flickr.com/'+ photo.server +'/'+ photo.id +'_'+ photo.secret +'_m.jpg';
+         var photoUrl = 'http://www.flickr.com/photos/'+ flickrNickname +'/'+ photo.id;
+         list += '<li id="flickrItem_'+i+'"><a href="'+ photoUrl +'" title="'+ photo.title +'"><img alt="'+ photo.title +'" src="'+ imgUrl +'" /></a></li>';
+     }
+     list += '<li class="flickrLink"><a href="http://www.flickr.com/photos/'+ flickrNickname + '">Flickr page</a></li>';
+     document.getElementById('flickr').innerHTML = list;
+}
+</script>
+<script lang="Javascript" src="http://api.flickr.com/services/rest/?format=json&method=flickr.photos.search&user_id=59867780@N04&per_page=5&api_key=59bddff8d357f363307238fa34f9c9ea"></script>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Alistair Stead -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+<img class="right" src="/images/greyscale-logo.png">
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'designdisclosurecom';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage/';
+        var disqus_url = 'http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

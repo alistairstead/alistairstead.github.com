@@ -1,0 +1,1470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Design Disclosure - Portfolio & Personal Blog of Alistair Stead]]></title>
+  <link href="http://alistairstead.github.com/atom.xml" rel="self"/>
+  <link href="http://alistairstead.github.com/"/>
+  <updated>2012-08-19T22:21:38+01:00</updated>
+  <id>http://alistairstead.github.com/</id>
+  <author>
+    <name><![CDATA[Alistair Stead]]></name>
+    <email><![CDATA[alistair.stead@designdisclosure.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Deploy Magento with Capistrano]]></title>
+    <link href="http://alistairstead.github.com/2012/04/deploy-magento-with-capistrano/"/>
+    <updated>2012-04-11T23:46:00+01:00</updated>
+    <id>http://alistairstead.github.com/2012/04/deploy-magento-with-capistrano</id>
+    <content type="html"><![CDATA[<p>So you have a Magento project and there must be a better way than you currently have to deploy your code to a server? Well there are many ways to do this from FTP/SFTP, rsync or SCM checkouts. You could even build a package and deploy using a package manager. However there is one options that from experience fits all eventualities and can be turned into a repeatable process where you don&#8217;t have to remember a list of manual steps. It can even have inbuilt functionality to revert a deployment if for some reason you need to.</p>
+
+<h2>What would we like from a deployment system</h2>
+
+<ul>
+<li>Fast deployment.</li>
+<li>Repeatable process.</li>
+<li>Remove all manual steps or tasks.</li>
+<li>Easy and quick roll back to a previous state.</li>
+<li>Simple to use once setup.</li>
+</ul>
+
+
+<h2>Extra credits</h2>
+
+<ul>
+<li>Extensible to cover your specific needs.</li>
+<li>Work across a cluster of servers .</li>
+<li>Work across servers with different roles for the application.</li>
+</ul>
+
+
+<p><span class='pullquote-right' data-pullquote='Capistrano - provides all of the features we are looking for, plus all the extra credit features and more.'>
+Capistrano originally developed to deploy Ruby on Rails applications has evolved through a number of iterations to become a general purpose deployment tool that can be used for deploying any type of code base or packaged application. Capistrano - provides all of the features we are looking for, plus all the extra credit features and more. It has been used for many projects and is tried and trusted in the PHP community too. You will find many existing Capistrano scripts or pre-packaged Gems that provide functionality to deploy specific PHP applications and to deal with their specific requirements including Magentify.
+</span></p>
+
+<!--more-->
+
+
+<h2>Magentify</h2>
+
+<p>I have created a specific Gem extension to Capistrano that will provide the specific functionality you need to deploy a Magento project with Capistrano. This can be easily installed and configured to you exact deployment requirements.</p>
+
+<h3>Prerequisites</h3>
+
+<ol>
+<li>You must have SSH access to each of the machines you will be deploying to.</li>
+<li>You must have the same user and password on each of these machines but ideally you will have an SSH Key setup to provide access.</li>
+</ol>
+
+
+<h3>Install</h3>
+
+<p>To use Capistrano it needs to be installed on a single machine. The machine that will be running the deployment. For my personal projects that is my laptop but for work projects we have a central deployment server that is all setup for this purpose.</p>
+
+<pre><code>$ gem install capistrano
+$ gem install magentify
+</code></pre>
+
+<p><strong><em>You may need to add <code>sudo</code> to these install commands depending upon your user and access levels.</em></strong></p>
+
+<h3>Magentify your Magento project</h3>
+
+<p>Although you can use an alternate structure by modifying the paths in the generated configuration file. I prefer to use a directory structure that allows me to keep my project tools within a project codebase. Maintaining them in source control but outside of the public document root and away from harm. This article is written with the assumption that your code repository looks something like this but you are free to use the structure that suite you:</p>
+
+<pre><code>.
+├── README.md
+├── public # This is our Magento src code and eventual web server doc root
+│   ├── LICENSE.html
+│   ├── LICENSE.txt
+│   ├── LICENSE_AFL.txt
+│   ├── RELEASE_NOTES.txt
+│   ├── app
+│   ├── cron.php
+│   ├── cron.sh
+│   ├── downloader
+│   ├── errors
+│   ├── favicon.ico
+│   ├── get.php
+│   ├── includes
+│   ├── index.php
+│   ├── index.php.sample
+│   ├── install.php
+│   ├── js
+│   ├── lib
+│   ├── mage
+│   ├── media
+│   ├── php.ini.sample
+│   ├── shell
+│   ├── skin
+│   └── var
+└── tools
+    ├── capistrano # This is where we will create our Capistrano scripts
+    ├── chef
+    └── vagrant
+</code></pre>
+
+<p>Run the following command to initialize your project with the base Magento specific Capistrano configuration that we will update to your specific requirements.</p>
+
+<pre><code>$ cd tools/capistrano
+$ magentify .
+</code></pre>
+
+<p>This will generate the following files:</p>
+
+<pre><code>.
+├── capistrano
+│   ├── Capfile
+│   └── config
+│       └── deploy.rb
+</code></pre>
+
+<p>In order to configure and customize the deployment to your specific needs you will need to edit <code>deploy.rb</code></p>
+
+<figure class='code'><figcaption><span>deploy.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">set</span> <span class="ss">:application</span><span class="p">,</span> <span class="s2">&quot;set your application name here&quot;</span>
+</span><span class='line'><span class="n">set</span> <span class="ss">:domain</span><span class="p">,</span>      <span class="s2">&quot;</span><span class="si">#{</span><span class="n">application</span><span class="si">}</span><span class="s2">.com&quot;</span>
+</span><span class='line'><span class="n">set</span> <span class="ss">:deploy_to</span><span class="p">,</span>   <span class="s2">&quot;/var/www/</span><span class="si">#{</span><span class="n">domain</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">set</span> <span class="ss">:repository</span><span class="p">,</span>  <span class="s2">&quot;git@github.com:/user_name/</span><span class="si">#{</span><span class="n">application</span><span class="si">}</span><span class="s2">.git&quot;</span> <span class="c1"># Enter the path to your SCM repository e.g. Github</span>
+</span><span class='line'><span class="n">set</span> <span class="ss">:scm</span><span class="p">,</span>         <span class="ss">:git</span>
+</span><span class='line'><span class="c1"># Or: `accurev`, `bzr`, `cvs`, `darcs`, `subversion`, `mercurial`, `perforce`, `subversion` or `none`</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">role</span> <span class="ss">:web</span><span class="p">,</span> <span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span>   <span class="c1"># Your HTTP server, Apache/etc</span>
+</span><span class='line'><span class="n">role</span> <span class="ss">:app</span><span class="p">,</span> <span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span>   <span class="c1"># This may be the same as your `Web` server or a separate administration server</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">set</span>  <span class="ss">:keep_releases</span><span class="p">,</span>  <span class="mi">3</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Turn off use of sudo if your user does not need elevated permissions</span>
+</span><span class='line'><span class="n">set</span> <span class="ss">:use_sudo</span><span class="p">,</span> <span class="kp">false</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">set</span> <span class="ss">:app_symlinks</span><span class="p">,</span> <span class="o">[</span><span class="s2">&quot;public/media&quot;</span><span class="p">,</span> <span class="s2">&quot;public/var&quot;</span><span class="p">,</span> <span class="s2">&quot;public/sitemaps&quot;</span><span class="p">,</span> <span class="s2">&quot;public/staging&quot;</span><span class="o">]</span>
+</span><span class='line'><span class="n">set</span> <span class="ss">:app_shared_dirs</span><span class="p">,</span> <span class="o">[</span><span class="s2">&quot;public/app/etc&quot;</span><span class="p">,</span> <span class="s2">&quot;public/sitemaps&quot;</span><span class="p">,</span> <span class="s2">&quot;public/media&quot;</span><span class="p">,</span> <span class="s2">&quot;public/var&quot;</span><span class="p">,</span> <span class="s2">&quot;public/staging&quot;</span><span class="o">]</span>
+</span><span class='line'><span class="n">set</span> <span class="ss">:app_shared_files</span><span class="p">,</span> <span class="o">[</span><span class="s2">&quot;public/app/etc/local.xml&quot;</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have configured the details of your application and the servers you wish to deploy your code to you can run the Capsitrano commands. You should run the Capistrano commands from the <code>tools/capistrano</code> directory so that the configuration you have created will be used.</p>
+
+<h3>Configure your servers</h3>
+
+<p>For full details of the options you can use in the configuration file it might be worth reading <a href="https://github.com/capistrano/capistrano/wiki/2.x-Getting-Started">Capistrano Getting Started</a> or if you have time a slightly longer article that will cover all of your questions, <a href="https://github.com/capistrano/capistrano/wiki/2.x-From-The-Beginning">Capistrano from the Beginning</a>.</p>
+
+<h4>Hosts</h4>
+
+<p>Capistrano is designed specifically to deploy to many servers. It can deploy code to 1 to &#8216;n&#8217; servers with minimal configuration. In the configuration above we are deploying to two servers one public web server and one admin server. If you need to deploy to more servers you simply need to add config lines for each of the additional servers.</p>
+
+<figure class='code'><figcaption><span>deploy.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">role</span> <span class="ss">:web</span><span class="p">,</span> <span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">101</span>   <span class="c1"># Web server 1</span>
+</span><span class='line'><span class="n">role</span> <span class="ss">:web</span><span class="p">,</span> <span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">102</span>   <span class="c1"># Web server 2</span>
+</span><span class='line'><span class="n">role</span> <span class="ss">:web</span><span class="p">,</span> <span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">103</span>   <span class="c1"># Web server 3</span>
+</span><span class='line'><span class="n">role</span> <span class="ss">:web</span><span class="p">,</span> <span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">104</span>   <span class="c1"># Web server 4</span>
+</span><span class='line'><span class="n">role</span> <span class="ss">:app</span><span class="p">,</span> <span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">111</span><span class="o">.</span><span class="mi">110</span>   <span class="c1"># Database and administration server</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Roles</h4>
+
+<p>You don&#8217;t simply have to deploy code to all of your servers in your cluster. You can define and configure roles applied to your servers so that the correct actions are carried out on each of the servers when you run your deployment tasks.</p>
+
+<h4>SCM</h4>
+
+<p>Capistrano will integrate directly with your preferred source control system. It has specific features for each system providing alternate strategies to limit the amount of data that is transferred.</p>
+
+<figure class='code'><figcaption><span>deploy.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">set</span> <span class="ss">:repository</span><span class="p">,</span>  <span class="s2">&quot;git@github.com:/user_name/magento_application.git&quot;</span>
+</span><span class='line'><span class="n">set</span> <span class="ss">:scm</span><span class="p">,</span>         <span class="ss">:git</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Setup</h3>
+
+<p>The first task you should run is the <code>deploy:setup</code> this will connect to each of the servers you configured in the previous steps. For those servers with roles that should include a code checkout it will create a set of directories into which your code will be checked out.</p>
+
+<pre><code>$ cap deploy:setup
+</code></pre>
+
+<p>You can then run <code>deploy:check</code> to confirm that each of the servers you configured previously have all of the prerequisite software, access and setting to complete the code checkout and all of the deployment tasks.</p>
+
+<pre><code>$ cap deploy:check
+</code></pre>
+
+<h3>Deploy</h3>
+
+<p>Once you are ready to deploy your code to the server(s) you can run the default <code>deploy</code> task. This will connect to each of the servers you have configured and create a new release of your application code on the server. Once all of the servers have the complete version of the code and a synchronized, the symlink for the current release will be updated. This final step takes milliseconds, meaning that this deployment can be run on production servers and in most cases users will not see the deployment happen as it is so quick and ensures not users can access an incomplete release.</p>
+
+<pre><code>$ cap deploy
+</code></pre>
+
+<p>Files that are located within the shared directory e.g. <code>local.xml</code> configuration or uploaded images are maintained between releases. Images uploaded by users should not be maintained in source control so it is key that they are kept in a safe location not changed between releases.</p>
+
+<h3>Roll Back</h3>
+
+<p>The previous releases of the application code are maintained on the servers so if you need to revert to a previous version for some reason you can simply roll back the deployment. This a quick and repeatable process that means you always have a rollback for each deployment. A safety net included with each deployment has to be a good thing right?</p>
+
+<pre><code>$ cap deploy:rollback
+</code></pre>
+
+<h3>Cleanup</h3>
+
+<p>If you want to clean up all these past releases and only keep the last five releases, you can run the cleanup command and automatically remove the older files.</p>
+
+<pre><code>$ cap deploy:cleanup
+</code></pre>
+
+<h3>Magento Tasks</h3>
+
+<p>The Magentify scripts provide additional tasks that can be run on the servers. These tasks provide access to run a number of remote tasks that are specific to Magento. To see the full list of available tasks you can run the following command.</p>
+
+<pre><code>$ cap -T
+</code></pre>
+
+<p>You can see the Magento specific tasks in the <code>magento</code> namespace.</p>
+
+<h4>Maintenance Page</h4>
+
+<p>If you need to place the maintenance page on one or more of your servers you can use the extended Capistrano task:</p>
+
+<pre><code>$ cap mage:disable
+</code></pre>
+
+<p>The will create a <code>maintenance.flag</code> file in the document root of your magento store. Once in place magento will route all traffic through the 503 error page that you can theme to your specific needs. This will prevent access to any part of your magento store including the admin.</p>
+
+<p><em>You can of course customise this behaviour to meet your needs or to provide access from your specific IP address.</em></p>
+
+<p>To remove the maintenance page and allow general customers to access your store again. Run the following Capistrano command:</p>
+
+<pre><code>$ cap mage:enable
+</code></pre>
+
+<h4>Clear Cache</h4>
+
+<p>This command currently clears the Magento file based cache but can be extended to clear the specific cache system you are using with your installation.</p>
+
+<pre><code>$ cap mage:cc
+</code></pre>
+
+<h4>Compiler</h4>
+
+<p>The compiler commands provide a mechanism to enable and disable the Magento compiler. There is also a step in deployment that will compile Magento on each deployment.</p>
+
+<pre><code>$ cap mage:enable_compiler
+
+$ cap mage:disable_compiler
+</code></pre>
+
+<h4>Indexes</h4>
+
+<p>The indexer command will run the Magento indexers using the shell script. This will populate the index tables following any data changes during deployment.</p>
+
+<pre><code>$ cap mage:indexer
+</code></pre>
+
+<h3>What next?</h3>
+
+<p>You can extend the script to include your own specific requirements. You will find a wealth of information available to you about <a href="https://github.com/capistrano/capistrano/wiki">Capistrano</a> and creating custom tasks.</p>
+
+<p><span class='pullquote-right' data-pullquote='be careful giving your clients the tools to make bad things happen.'>
+If you want to add a GUI to your deployment so that none technical people can run the deployment processes or any of the additional tasks that you make available however, be careful giving your clients the tools to make bad things happen. Tool such as <a href="https://github.com/peritor/webistrano/wiki">Webistrano</a> or <a href="https://github.com/joelmoss/strano">Strano</a> provide a graphical interface on top of the command line functionality of Capistrano.
+</span></p>
+
+<p>This is an open source project feel free to <a href="https://github.com/alistairstead/Magentify/fork_select">fork</a> the code and extend it with new features. Just send me pull requests and I will integrate them with the project. If you don&#8217;t have the time to create the features then <a href="https://github.com/alistairstead/Magentify/issues">submit feature requests</a> and maybe the community can help.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Updated Blog]]></title>
+    <link href="http://alistairstead.github.com/2012/02/updated-blog/"/>
+    <updated>2012-02-13T17:41:00+00:00</updated>
+    <id>http://alistairstead.github.com/2012/02/updated-blog</id>
+    <content type="html"><![CDATA[<p>It has been an absolute age since I last created any new content for this blog. The main reason has been simply that I have been very very busy doing other things. However it is also that due to the fact that creating content through a browser and storing it in a database just did not fit with the way I work.</p>
+
+<p>I spend most of my day working in a terminal window. I choose a text editor over an IDE, speed and flexibility over features. Okay I don&#8217;t go all the way back to basics I use <a href="http://blog.macromates.com/2011/textmate-2-0-alpha/">TextMate</a> and <a href="http://www.iterm2.com/">iTerm</a> with <a href="http://www.zsh.org/">ZSH</a> and <a href="https://github.com/robbyrussell/oh-my-zsh">oh-my-zsh</a>. All of these things let me work in the simplest most flexible way.</p>
+
+<p>My blog on the other hand always felt restrictive. So after some conversation on twitter /cc @mpmlopes @__debo I spent a couple of hours over the weekend making the leap to <a href="http://octopress.org/">octopress</a>. Although not loaded with features this lets me create content in the simplest format, markdown in this case and using Git and some Ruby it is baked into a static blog hosted on <a href="http://github.com/">Github</a> using Github pages.</p>
+
+<p>As you can see this has allowed me to create new content. Okay it is just an &#8216;Updated Blog&#8217; statement but it is a statement of more to come. Some of what has been keeping me busy for the last 12 months should be good enough to create new posts.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Package and Install your latest Magento 1.5+ extension]]></title>
+    <link href="http://alistairstead.github.com/2011/03/package-and-install-your-latest-magento-1-5-extension/"/>
+    <updated>2011-03-26T21:40:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/03/package-and-install-your-latest-magento-1-5-extension</id>
+    <content type="html"><![CDATA[<p>After spending many hours crafting the perfect Magento module you need to package it either for easy distribution to your client/team or to upload to Magento Connect.</p>
+
+<h2>Package the extension</h2>
+
+<p>First of all I would recommend reading the following wiki page;</p>
+
+<ul>
+<li><a href="http://www.magentocommerce.com/wiki/7_-_magento_connect/packaging_a_magento_extension_in_1.5">Packaging a Magento Extension in 1.5+</a></li>
+</ul>
+
+
+<p><strong>Note - If your planning to upload your module to Magento Connect ensure the package name and the name you enter on Magento Connect match</strong></p>
+
+<!--more-->
+
+
+<h2>Installing a module from a local package</h2>
+
+<p>Internally Magento uses a localised and enhanced version of Pear to manage packages and to distribute and install extensions. Since version 1.4.* the internal pear script has been renamed to mage. In order to use the mage script to run any of the commands it provides you first need to ensure that the executable bit is set for your user.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo chmod 775 ./mage
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once your user has permission to execute this script you can run it without any arguments to see a full list of commands;</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>./mage
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This will list all of the available commands. You can use this script to install remote extensions from Magento Connect or to install local packages such as the one you have just built. To install the local package you need to use the following command, changing the path and package name for the extension to the location of your files.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>./mage install-file var/connect/PackageName-0.1.12.tgz
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Thats it your done… Or at least you should be. If you are testing the package in the version of Magento you used to build the package remember to remove the original files first or you will get a bunch of errors. The error output is generally very helpful, simply do what is suggested and try the install again.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Testing Magento Checkout]]></title>
+    <link href="http://alistairstead.github.com/2011/03/testing-magento-checkout/"/>
+    <updated>2011-03-15T18:40:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/03/testing-magento-checkout</id>
+    <content type="html"><![CDATA[<p>While developing new functionality in Magento one of the key elements that you must ensure continues to work as expected is the checkout. After all an commerce website that can not trade is rather worthless.</p>
+
+<p>Using <a title="Mage-Test" href="http://github.com/alistairstead/Mage-Test">Mage-Test</a> you can easily create integration tests for the checkout process. This will allow you to ensure that your store still functions correctly after you have made any modifications.</p>
+
+<h2>Automated Integration Test</h2>
+
+<p>The example test method below is run within a Mage-Test controller test case.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="cp">&lt;?php</span>
+</span><span class='line'><span class="sd">/**</span>
+</span><span class='line'><span class="sd"> * @author Alistair Stead</span>
+</span><span class='line'><span class="sd"> * @test</span>
+</span><span class='line'><span class="sd"> */</span>
+</span><span class='line'><span class="k">public</span> <span class="k">function</span> <span class="nf">magentoCheckoutIntegrationTest</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Add the product to the basket</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="o">-&gt;</span><span class="na">setMethod</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">-&gt;</span><span class="na">setPost</span><span class="p">(</span>
+</span><span class='line'>            <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                <span class="s1">&#39;product&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;16&#39;</span><span class="p">,</span>
+</span><span class='line'>                <span class="s1">&#39;related_product&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+</span><span class='line'>                <span class="s1">&#39;qty&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span>
+</span><span class='line'>            <span class="p">)</span>
+</span><span class='line'>        <span class="p">);</span>
+</span><span class='line'>    <span class="c1">// Set an initial cookie so that the Magento cookie validation passes</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="o">-&gt;</span><span class="na">setCookie</span><span class="p">(</span><span class="s1">&#39;mage-test&#39;</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dispatch</span><span class="p">(</span><span class="s1">&#39;/checkout/cart/add/&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertResponseCode</span><span class="p">(</span><span class="s1">&#39;302&#39;</span><span class="p">,</span> <span class="s1">&#39;/checkout/cart/add/ has not redirected to the cart&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertRedirectRegex</span><span class="p">(</span><span class="s2">&quot;/^.*checkout.*$/&quot;</span><span class="p">,</span> <span class="s1">&#39;We are not directed to the checkout as expected&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">reset</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Set the checkout as guest</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="o">-&gt;</span><span class="na">setMethod</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">-&gt;</span><span class="na">setPost</span><span class="p">(</span>
+</span><span class='line'>            <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                <span class="s1">&#39;method&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;guest&#39;</span>
+</span><span class='line'>            <span class="p">)</span>
+</span><span class='line'>        <span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dispatch</span><span class="p">(</span><span class="s1">&#39;/checkout/onepage/saveMethod/&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertResponseCode</span><span class="p">(</span><span class="s1">&#39;200&#39;</span><span class="p">,</span> <span class="s1">&#39;/checkout/onepage/saveMethod/ has not responded as expected&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">reset</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Save billing address</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="o">-&gt;</span><span class="na">setMethod</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">-&gt;</span><span class="na">setPost</span><span class="p">(</span>
+</span><span class='line'>            <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                <span class="s1">&#39;billing&#39;</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                    <span class="s1">&#39;address_id&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;firstname&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;Authorize&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;lastname&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;Capture&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;company&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;email&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;user@mage-test.co.uk&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;street&#39;</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;Flat 14b&#39;</span><span class="p">,</span> <span class="s1">&#39;Baker Street&#39;</span><span class="p">),</span>
+</span><span class='line'>                    <span class="s1">&#39;city&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;London&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;region_id&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;postcode&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;W1B OW3&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;country_id&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;GB&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;telephone&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;+44 1234 123456&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;fax&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;+44 1234 123456&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;customer_password&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;confirm_password&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;save_in_address_book&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;use_for_shipping&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span>
+</span><span class='line'>                <span class="p">)</span>
+</span><span class='line'>            <span class="p">)</span>
+</span><span class='line'>        <span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dispatch</span><span class="p">(</span><span class="s1">&#39;/checkout/onepage/saveBilling/&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertResponseCode</span><span class="p">(</span><span class="s1">&#39;200&#39;</span><span class="p">,</span> <span class="s1">&#39;/checkout/onepage/saveBilling/ has not responded as expected&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">reset</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Set shipping method</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="o">-&gt;</span><span class="na">setMethod</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">-&gt;</span><span class="na">setPost</span><span class="p">(</span>
+</span><span class='line'>            <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                <span class="s1">&#39;shipping_method&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;flatrate_flatrate&#39;</span>
+</span><span class='line'>            <span class="p">)</span>
+</span><span class='line'>        <span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dispatch</span><span class="p">(</span><span class="s1">&#39;/checkout/onepage/saveShippingMethod/&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertResponseCode</span><span class="p">(</span><span class="s1">&#39;200&#39;</span><span class="p">,</span> <span class="s1">&#39;/checkout/onepage/saveShippingMethod/ has not responded as expected&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">reset</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Save payment</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="o">-&gt;</span><span class="na">setMethod</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">-&gt;</span><span class="na">setPost</span><span class="p">(</span>
+</span><span class='line'>            <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                <span class="s1">&#39;payment&#39;</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                    <span class="s1">&#39;method&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;paypal_direct&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_type&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;SM&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_number&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;XXXXXXXXXXXXXXX&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_exp_month&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_exp_year&#39;</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="nb">date</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">6</span><span class="p">),</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_cid&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;444&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_ss_issue&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_ss_start_month&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_ss_start_year&#39;</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="nb">date</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">)</span>
+</span><span class='line'>            <span class="p">)</span>
+</span><span class='line'>        <span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dispatch</span><span class="p">(</span><span class="s1">&#39;/checkout/onepage/savePayment/&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertResponseCode</span><span class="p">(</span><span class="s1">&#39;200&#39;</span><span class="p">,</span> <span class="s1">&#39;/checkout/onepage/savePayment/ has not responded as expected&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">reset</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Save order</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="o">-&gt;</span><span class="na">setMethod</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">-&gt;</span><span class="na">setPost</span><span class="p">(</span>
+</span><span class='line'>            <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                <span class="s1">&#39;payment&#39;</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+</span><span class='line'>                    <span class="s1">&#39;method&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;paypal_direct&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_type&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;SM&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_number&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;XXXXXXXXXXXXXXX&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_exp_month&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_exp_year&#39;</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="nb">date</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">6</span><span class="p">),</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_cid&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;444&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_ss_issue&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_ss_start_month&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+</span><span class='line'>                    <span class="s1">&#39;cc_ss_start_year&#39;</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="nb">date</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">)</span>
+</span><span class='line'>            <span class="p">)</span>
+</span><span class='line'>        <span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dispatch</span><span class="p">(</span><span class="s1">&#39;/checkout/onepage/saveOrder/&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertResponseCode</span><span class="p">(</span><span class="s1">&#39;200&#39;</span><span class="p">,</span> <span class="s1">&#39;/checkout/onepage/saveOrder/ has not responded as expected&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="c1">// Decode the JSON response so that we can evaluate the success</span>
+</span><span class='line'>    <span class="nv">$data</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">response</span><span class="o">-&gt;</span><span class="na">getBody</span><span class="p">());</span>
+</span><span class='line'>    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span>
+</span><span class='line'>        <span class="nv">$data</span><span class="o">-&gt;</span><span class="na">success</span><span class="p">,</span>
+</span><span class='line'>        <span class="s2">&quot;Unexpected status expected result :: </span><span class="si">{</span><span class="nv">$data</span><span class="o">-&gt;</span><span class="na">error_messages</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="cp">?&gt;</span><span class="x"></span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can use a <a title="PHPUnit" href="https://github.com/sebastianbergmann/phpunit/">PHPUnit</a> data provider to supply a set of data fixtures to be used for credit card numbers, address information and other values. Using a data provider you can test for not only the successful checkout but also the error handling within the checkout process.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[MageTool Update v0.3.0]]></title>
+    <link href="http://alistairstead.github.com/2011/02/magetool-update-v0-3-0/"/>
+    <updated>2011-02-09T14:27:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/02/magetool-update-v0-3-0</id>
+    <content type="html"><![CDATA[<p>While at Magento Imagine I have used the time where I was awake due to jet lag to finish a couple of new features to <a title="MageTool" href="http://www.magetool.co.uk/" target="_blank">MageTool</a>.</p>
+
+<p>MageTool v0.3.0 now includes:</p>
+
+<ul>
+<li>Improved feedback when running commands for mage-core-resource</li>
+<li>Added commands to query and run the Magento indexer</li>
+<li>Added commands to query and run the Magento compiler</li>
+<li>Improved mage-core-cache commands</li>
+<li>Added functionality to run individual module setup classes directly</li>
+<li>Added functionality to dispatch Magento events to test your observers</li>
+</ul>
+
+
+<p>All of these commands are intended to make development of Magento extensions easier and more streamlined. If you have feature requests please let me know. Or if you wish feel free to fork the <a title="MageTool on Github" href="https://github.com/alistairstead/MageTool">project on GitHub</a> and add the command that you need.</p>
+
+<p>If you find and bugs with MageTool please raise a ticket on <a title="MageTool bug tracker" href="https://github.com/alistairstead/MageTool/issues">GitHub</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Magento command line tools MageTool]]></title>
+    <link href="http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool/"/>
+    <updated>2010-10-10T00:05:00+01:00</updated>
+    <id>http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool</id>
+    <content type="html"><![CDATA[<p>If you have spent any time developing with Magento I expect that like me you have found a number of tasks you find yourself repeating many many times. While developing new modules or themes there are many times when you need to clear the Magento cache or even disable it completely. Now of course you can log into the admin system and carry out these actions but have you every thought there must be an easier way?</p>
+
+<p>Many development frameworks or other open source projects have tool that can be used by developers to issue commands quickly and easily. Magento however does not have any built in tools to improve the development workflow. This is where MageTool fits in!</p>
+
+<h2>MageTool</h2>
+
+<p>How can <a href="http://github.com/alistairstead/MageTool">MageTool</a> help? Well hopefully in a number of ways. MageTool extends the existing Zend Framework command line tool zf, adding new commands that are specific to Magento development workflow. Rather then navigating the Magento admin system to clear cache or the enable or disable caching you can issue a simple command in your terminal window and achieve the same results. You can also modify the Magento configuration quickly or issue commands that will selectively update many configuration values.</p>
+
+<p>In my standard development practices I maintain a number of Magento installs on different servers. These are used for Development, Staging and UAT each using different domains to access the stores. This means however that I often need to move databases between servers, resulting in the ‘base_url’ configuration being incorrect. This can be easily updated if you have database access and is fairly simple if you only have a couple of sites setup. However if you have more sites setup this can become very very difficult to maintain and calls into question the idea of working with many environment servers during development.</p>
+
+<p>MageTool can help again in any situation where you need to move a Magento install and then update the ‘base_url’ configuration. You can construct a command that will quickly and easily update all URLs in the Magento config.</p>
+
+<!--more-->
+
+
+<h2>Install</h2>
+
+<p>First install ZF:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo pear channel-discover pear.zfcampus.org
+</span><span class='line'><span class="nv">$ </span>sudo pear install zfcampus/zf
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then install MageTool:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo pear channel-discover pear.magetool.co.uk
+</span><span class='line'><span class="nv">$ </span>sudo pear install magetool/magetool
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have installed ZF and MageTool you will need to create configuration for your user by creating the following file:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>vim ~/.zf.ini
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Add the following lines to load the additional MageTool commands making them available to zf:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ini'><span class='line'><span class="na">basicloader.classes.1</span> <span class="o">=</span> <span class="s">&quot;MageTool_Tool_MageApp_Provider_Manifest&quot;</span>
+</span><span class='line'><span class="na">basicloader.classes.2</span> <span class="o">=</span> <span class="s">&quot;MageTool_Tool_MageExtension_Provider_Manifest&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After the install has completed successfully if you run zf you will see the additional commands available for Magento.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>  MageAdminUser
+</span><span class='line'>    zf show mage-admin-user
+</span><span class='line'>    zf create mage-admin-user username email password firstname<span class="o">[=</span>Admin<span class="o">]</span> lastname<span class="o">[=</span>User<span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  MageCoreCache
+</span><span class='line'>    zf clear mage-core-cache
+</span><span class='line'>    zf <span class="nb">enable </span>mage-core-cache
+</span><span class='line'>    zf disable mage-core-cache
+</span><span class='line'>
+</span><span class='line'>  MageCoreResource
+</span><span class='line'>    zf show mage-core-resource
+</span><span class='line'>    zf delete mage-core-resource path
+</span><span class='line'>
+</span><span class='line'>  MageCoreConfig
+</span><span class='line'>    zf show mage-core-config path scope
+</span><span class='line'>    zf <span class="nb">set </span>mage-core-config path scope value
+</span><span class='line'>    zf replace mage-core-config match value path scope
+</span><span class='line'>
+</span><span class='line'>  MageApp
+</span><span class='line'>    zf version mage-app
+</span><span class='line'>
+</span><span class='line'>  MageExtension
+</span><span class='line'>    zf create mage-extension code-pool vendor-name extension-name
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Example Usage</h2>
+
+<h3>Cache</h3>
+
+<p>To clear the entire Magento cache simply run the following command from within the Magento project root directory:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf clear mage-core-cache
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To disable the entire Magento cache:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf disable mage-core-cache
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Core Config</h3>
+
+<p>MageTool provides commands to show existing configuration values and to set their values. It also has an additional command that can be used to perform a str_replace on the config values. This can be used if you have moved the database from another server with a different domain to update the config values in a single command:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf replace mage-core-config --match www.current-domain.com --value shop.new-domain.co.uk
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This will update all the config value that include the string “www.current-domain.com” and substitute it for “shop.new-domain.co.uk”. This can also be further refined to only affect specific config paths or scopes.</p>
+
+<h3>Core Resource</h3>
+
+<p>During the development of a new extension you sometimes need to remove the resource from the internal registry to force it to re-run the install scripts. MageTool can help you first see which versions of each extensions are installed:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf show mage-core-resource --code mage_log
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can also remove specific entries:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf delete mage-core-resource --code mage_log
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Admin User</h3>
+
+<p>If you inherit a Magento project you may need to create a new admin user to gain access to the system. MageTool can list existing admin users and email addresses or it can create a new user for you to use.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf create mage-admin-user --username newadmin --email newadmin@project.com --password newpassword
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Roadmap</h2>
+
+<p>I plan to add additional functionality to create skeleton files for new extensions or themes, removing the repetitive creation of directories and configuration files when creating new extension.</p>
+
+<p>If you have additional suggestions please let me know or alternatively you can fork the <a href="http://github.com/alistairstead/MageTool">MageTool</a> project on github and add the commands before sending me a pull request.</p>
+
+<h2>Feedback and Bugs</h2>
+
+<p>If you have any problems using MageTool or if you have any feedback or suggestions please <a href="http://github.com/alistairstead/MageTool/issues">submit them here</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Symfony APC Cache and Memcache Session Storage]]></title>
+    <link href="http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage/"/>
+    <updated>2009-11-30T23:22:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage</id>
+    <content type="html"><![CDATA[<p><img src="http://alistairstead.github.com/images/posts/symfony-memcache.jpg" title="'symfony memcache'" ></p>
+
+<p>In a previous post I described some of the reasons why you would want to store your session data in an alternate location to temporary files on your server. I explained the<a title="symfony Doctrine database session storage" href="http://alistairstead.github.com/2009/11/symfony-doctri…ession-storage/"> setup of database session storage using Doctrine</a> and how this would allow you to take advantage of storing session data in a database. However depending upon your application requirements storing your session data in a database may cause excessive load on you database. You could of course use a separate dedicated database server to store your session data. However there is an alternate setup that will allow you to centralise your session storage ready for horizontal scaling of your hosting e.g. adding additional web servers.</p>
+
+<!--more-->
+
+
+<p>symfony provides a very easy way for you to configure your application to use a number of alternate session storage strategies. In this article I will explain the steps needed to setup your application to use first APC as your session storage and then Memcache. Both of these strategies result in the session data being stored in volatile memory on your server and a cookie is stored on the client to maintain reference to the session data. You can set the lifetime of the cookie to control your session timeout.</p>
+
+<h2>Install APC and Memcached modules</h2>
+
+<p>First we need to ensure that your server has the required packages installed. I am using Ubuntu 9.04 in this example but the packages are available for your preferred linux distro. To install the required packages run the following commands.</p>
+
+<p>Install the required PHP modules and the correct version of apache to successfully install APC, then install the Pecl APC module.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo apt-get install php5-dev php-pear apache2-threaded-dev
+</span><span class='line'><span class="nv">$ </span>sudo pecl install apc
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Install memcache</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo apt-get install memcached
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Configure APC session storage</h2>
+
+<p>Once you have your server setup with the required packages you need to configure symfony to use your preferred session storage strategy. To do this you simply need to modify the factories.yml file for you application. You need to modify the section of the factories.yml that defines your application storage strategy e.g.</p>
+
+<p>Amend your factories.yml to include the following settings then change the parameters to reflect you setup such as the domain and session name.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">storage</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfCacheSessionStorage</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfproject</span> <span class="c1">#[required] name of session to use</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_path</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/</span> <span class="c1">#[required] cookie path</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_domain</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">example.com</span> <span class="c1">#[required] cookie domain</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_lifetime</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">+30 days</span> <span class="c1">#[required] liftime of cookie</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_secure</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span> <span class="c1">#[required] send only if secure connection</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_http_only</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span> <span class="c1">#[required] accessible only via http protocol</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">cache</span><span class="p-Indicator">:</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfAPCCache</span> <span class="c1">#[required] define the cache strategy</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span> <span class="c1">#[required] this empty key is required or you will get warnings</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have made this change clear the symfony cache and try your application. You will not see any noticeable difference unless you check the symfony toolbar and look for the additional cookie stored on the client.</p>
+
+<p>This example defines the use of sfAPCCache as the session storage strategy. APC stores the session data in memory on your web server making it quicker to access than reading a file or database record.</p>
+
+<h2>Configure Memcache session storage</h2>
+
+<p>To setup memcache session storage it is almost as simple. Amend your factories.yml to include the following settings then change the parameters to reflect your setup including any specific values for your memcache server if you set it up differently.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">storage</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfCacheSessionStorage</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfproject</span> <span class="c1">#[required] name of session to use</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_path</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/</span> <span class="c1">#[required] cookie path</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_domain</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">example.com</span> <span class="c1">#[required] cookie domain</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_lifetime</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">+30 days</span> <span class="c1">#[required] liftime of cookie</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_secure</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span> <span class="c1">#[required] send only if secure connection</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_http_only</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span> <span class="c1">#[required] accessible only via http protocol</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">cache</span><span class="p-Indicator">:</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfMemcacheCache</span> <span class="c1">#[required] define the cache strategy</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>          <span class="l-Scalar-Plain">servers</span><span class="p-Indicator">:</span> <span class="c1"># Array of servers</span>
+</span><span class='line'>            <span class="l-Scalar-Plain">localserver</span><span class="p-Indicator">:</span>
+</span><span class='line'>              <span class="l-Scalar-Plain">host</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">localhost</span> <span class="c1"># hostname or IP of mamcache server</span>
+</span><span class='line'>              <span class="l-Scalar-Plain">port</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">11211</span> <span class="c1"># default memcache port</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have made this change clear your symfony cache and test your application.</p>
+
+<p>Memcache is a volatile storage strategy very similar to RAM in you PC or Mac. It is very quick to access as the session data is held in the server memory rather than in a file or database. Memcache can also be centralised onto a dedicated memcache server allowing your application to be scaled. The example above uses localhost as the memcache server but the host value of the configured server could be modified to be an alternate dedicated memcache server.</p>
+
+<p>I will be running some performance tests using these strategies and also compare the default file based session storage and also the database session storage strategy. If you have already run these tests I would be keen to see your results.</p>
+
+<p>I hope these examples prove useful. If you have any queries or questions please leave a comment.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Symfony Doctrine Database Session Storage]]></title>
+    <link href="http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage/"/>
+    <updated>2009-11-30T22:23:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage</id>
+    <content type="html"><![CDATA[<p>Sessions are normally managed by your server and depending upon how involved you get with the PHP setup you need never know how this data is stored. The default setup for PHP is to store session data in temporary files on the server. So why would we want to change how sessions are handled and what advantage can we gain from any changes we make.</p>
+
+<h2>Why use database session management?</h2>
+
+<p>Sessions allow you maintain persistence within PHP applications. With every HTTP request a PHP application must re-assign every variable and object needed in your application. Sessions allow you to store data that is required to persist past each HTTP request allowing it to be easily retrieved and used.</p>
+
+<!--more-->
+
+
+<p>Sessions are commonly used when creating a secure application, used to store the state of a user e.g. if they are logged in or credentials to control access to content.</p>
+
+<p>By storing session data in a database table you are able to create an application interface that will show information about the users that are logged in. This for example could show the number of users logged into the application or show administrators who is logged in.</p>
+
+<p>If you need to scale your application by adding more than one server, saving your session data in temporary files can lead to major problems. By using database storage you can optimise and unify the session storage, ensuring that session data is always available and consistent.</p>
+
+<p>Obviously there are other solutions for scalable session storage such as APC or MemCache but these solutions are for another post.</p>
+
+<h2>How to setup Doctrine database session storage</h2>
+
+<p>You first need to add a table to you database schema that will be used to store your session data. Although you can create this table manually, adding it to your scheme also created the model classes that you can later use to interact with the table data.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">Session</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">columns</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">id</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span> <span class="nv">type</span><span class="p-Indicator">:</span> <span class="nv">string(32)</span><span class="p-Indicator">,</span> <span class="nv">primary</span><span class="p-Indicator">:</span> <span class="nv">true</span><span class="p-Indicator">,</span> <span class="nv">notnull</span><span class="p-Indicator">:</span> <span class="nv">true</span> <span class="p-Indicator">}</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">data</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span> <span class="nv">type</span><span class="p-Indicator">:</span> <span class="nv">string(4000)</span><span class="p-Indicator">,</span> <span class="nv">notnull</span><span class="p-Indicator">:</span> <span class="nv">true</span> <span class="p-Indicator">}</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">time</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span> <span class="nv">type</span><span class="p-Indicator">:</span> <span class="nv">integer(4)</span><span class="p-Indicator">,</span> <span class="nv">notnull</span><span class="p-Indicator">:</span> <span class="nv">true</span> <span class="p-Indicator">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have added the table to your schema you can build your model and database:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>symfony doctrine:build-all
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You then need to configure your symfony application to use this table to store all session data. To do this you need to modify the factories.yml file for your application. Update your file to include the following lines:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">storage</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfPDOSessionStorage</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_table</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">session</span> <span class="c1"># Name of the table storing the sessions</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_id_col</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">id</span> <span class="c1"># The primary key column</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_data_col</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">data</span> <span class="c1"># The column where the session data will be stored</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">db_time_col</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">time</span> <span class="c1"># The column where the timestamp of the session will be stored</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">database</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doctrine</span> <span class="c1"># Name of the database connection to use</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have modifies your factories.yml file you will need to clear the symfony cache. After that your application should run exactly as it did before except that your users session data will be stored in the database table.</p>
+
+<p>The data column stores all the session data in a serialised form this is deserialized each time a user requests the data. There are many uses for this type of session storage and I hope this brief explanation helps you.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[YUI Connect asynchronous file uploads]]></title>
+    <link href="http://alistairstead.github.com/2009/11/yui-connect-asynchronous-file-uploads/"/>
+    <updated>2009-11-23T14:26:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/yui-connect-asynchronous-file-uploads</id>
+    <content type="html"><![CDATA[<p>I&#8217;m sure the problems with multi-part data that I have been working through this morning is very simple but there are a number of forum posts about this, so I will share my findings. When using YUI Connection Manager in conjunction with multi-part form data I have experienced problems creating the asynchronous request and canceling the form submission. Even after setting up the request and callback object and checking the YUI API repeatedly the problem resides elsewhere.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">addListener</span><span class="p">(</span><span class="nx">forms</span><span class="p">,</span> <span class="s1">&#39;submit&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">_onFormSubmit</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+</span><span class='line'><span class="nx">_onFormSubmit</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">YAHOO</span><span class="o">&gt;</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">(</span><span class="nx">e</span><span class="p">);</span>
+</span><span class='line'>    <span class="c1">// Set the form  YAHOO.util.Connect.setForm(e.currentTarget);</span>
+</span><span class='line'>    <span class="c1">// Configure the callback object</span>
+</span><span class='line'>    <span class="nx">callBackObj</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">success</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateComplete</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">failure</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateFailed</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">argument</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">objType</span><span class="o">:</span> <span class="nx">objType</span><span class="p">,</span>
+</span><span class='line'>            <span class="nx">region</span><span class="o">:</span> <span class="nx">regionObj</span><span class="p">,</span>
+</span><span class='line'>            <span class="nx">mode</span><span class="o">:</span> <span class="nx">submitbutton</span><span class="p">.</span><span class="nx">value</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="c1">// Make the request</span>
+</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Connect</span><span class="p">.</span><span class="nx">asyncRequest</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">currentTarget</span><span class="p">.</span><span class="nx">action</span><span class="p">,</span> <span class="nx">callBackObj</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With non multi-part forms you can hijack the submit event of the form and create an asynchronous request. However once you try with multi-part data no matter how you set this up and attempt to cancel the form submit action the form will still make an HTTP request in the main window.</p>
+
+<h2>The YUI Multi-Part Data Solution</h2>
+
+<p>The solution is very simple once you find it but it is easy to overlook! In order to use YUI connect to create an asynchronous request you must remove the &#8216;submit&#8217; button and replace it with a &#8216;button&#8217; then assign it an eventListener that will create the asyncRequest.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">alternateButton</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;alternateButtonId&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">addListener</span><span class="p">(</span><span class="nx">alternateButton</span><span class="p">,</span> <span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">_onFormSubmit</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+</span><span class='line'><span class="nx">_onFormSubmit</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">(</span><span class="nx">e</span><span class="p">);</span>
+</span><span class='line'>    <span class="c1">// Set the form</span>
+</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Connect</span><span class="p">.</span><span class="nx">setForm</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">currentTarget</span><span class="p">);</span>
+</span><span class='line'>    <span class="c1">// Configure the callback object</span>
+</span><span class='line'>    <span class="nx">callBackObj</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">success</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateComplete</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">failure</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateFailed</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">argument</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">objType</span><span class="o">:</span> <span class="nx">objType</span><span class="p">,</span>
+</span><span class='line'>            <span class="nx">region</span><span class="o">:</span> <span class="nx">regionObj</span><span class="p">,</span>
+</span><span class='line'>            <span class="nx">mode</span><span class="o">:</span> <span class="nx">submitbutton</span><span class="p">.</span><span class="nx">value</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="c1">// Make the request</span>
+</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Connect</span><span class="p">.</span><span class="nx">asyncRequest</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">currentTarget</span><span class="p">.</span><span class="nx">action</span><span class="p">,</span> <span class="nx">callBackObj</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When trying to use multi-part data YUI Connection Manager will create an iframe in the document that your form will submit the data to. If you try and use the submit handler YUI currently does not change the target value of the submit event.</p>
+
+<p>The YUI examples do all show the use of alternate buttons rather than a standard submit button however it can be easily overlooked. I hope this helps someone!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Propel doUpdate update multiple records in a single statement]]></title>
+    <link href="http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/"/>
+    <updated>2009-10-08T20:59:00+01:00</updated>
+    <id>http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement</id>
+    <content type="html"><![CDATA[<p>I&#8217;ve been very busy with a number of project launches lately. While working on a little problem today I re-discovered a little gem for use with Propel to update multiple rows in a single statement, rather than iterating through a collection updating and saving each object in turn.</p>
+
+<p>This task is simple in SQL but after a while using any abstraction layer you may find like me you forget about the simple solutions as you spend you day working with complex objects and trying to hydrate custom objects. Blah blah blah&#8230;</p>
+
+<p>The complex solution to a simple problem:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="cp">&lt;?php</span>
+</span><span class='line'><span class="c1">// Obtain the connection configured</span>
+</span><span class='line'><span class="nv">$conn</span> <span class="o">=</span> <span class="nx">Propel</span><span class="o">::</span><span class="na">getConnection</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">DATABASE_NAME</span><span class="p">);</span>
+</span><span class='line'><span class="c1">// Create a Criteria object that will select the correct rows from the database</span>
+</span><span class='line'><span class="nv">$selectCriteria</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Criteria</span><span class="p">();</span>
+</span><span class='line'><span class="nv">$selectCriteria</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">COLUMB_TO_SELECT</span><span class="p">,</span> <span class="s1">&#39;value_to_match&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="c1">// Create a Criteria object includes the value you want to set</span>
+</span><span class='line'><span class="nv">$updateCriteria</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Criteria</span><span class="p">();</span>
+</span><span class='line'><span class="nv">$updateCriteria</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">COLUMB_TO_CHANGE</span><span class="p">,</span> <span class="s1">&#39;value_to_be_set&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="c1">// Execute the query</span>
+</span><span class='line'><span class="nx">BasePeer</span><span class="o">::</span><span class="na">doUpdate</span><span class="p">(</span><span class="nv">$selectCriteria</span><span class="p">,</span> <span class="nv">$updateCriteria</span><span class="p">,</span> <span class="nv">$conn</span><span class="p">);</span>
+</span><span class='line'><span class="cp">?&gt;</span><span class="x"></span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Thats it! I hope it helps&#8230;</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How to: Magento eCommerce help and tutorials]]></title>
+    <link href="http://alistairstead.github.com/2009/07/how-to-magento-ecommerce-tutorials/"/>
+    <updated>2009-07-29T23:34:00+01:00</updated>
+    <id>http://alistairstead.github.com/2009/07/how-to-magento-ecommerce-tutorials</id>
+    <content type="html"><![CDATA[<p><img src="http://alistairstead.github.com/images/posts/Magento-How-TO1.jpg" title="'Magento how to'" ></p>
+
+<p><a title="Magento - Home  - eCommerce Software for Growth" href="http://www.magentocommerce.com/">Magento</a> is an Open Source eCommerce platform developed using the Zend Framework by <a title="Home :: Varien :: Open Source eCommerce Development and Consulting Firm" href="http://www.varien.com/">Varien</a>. It is a fabulously customizable and extendible platform that once mastered can allow you to develop feature rich eCommerce solutions for your clients quickly and effectively. However for some mastering the Magento platform may not be that easy.</p>
+
+<p>Magento uses common design patterns such as <a title="P of EAA: Model View Controller" href="http://www.martinfowler.com/eaaCatalog/modelViewController.html">MVC</a>, <a title="P of EAA: Application Controller" href="http://www.martinfowler.com/eaaCatalog/applicationController.html">Application Controller</a> and <a title="P of EAA: Two Step View" href="http://www.martinfowler.com/eaaCatalog/twoStepView.html">Two Step View</a> to structure the application and provide mechanisms to extend and override the functionality and presentation. The platform has a huge number of files and directories that can cause confusion for newcomers to the platform. However this extended folder structure clearly defines where the platforms core files exist and where you can place your custom code and modules. Allowing you to extend the platform without modifying the core and breaking the upgrade process.</p>
+
+<p>However daunting the platform appears or skeptical you may be due to the unfamiliar concepts, invest a small amount of time with the platform and it will soon start to payoff. This list of tutorials and resources will help you get up to speed quickly.</p>
+
+<!--more-->
+
+
+<h2>Magento eCommerce Tutorials and Resources</h2>
+
+<p>I have compiled the following list of resources that have helped me while developing for the Magento platform.</p>
+
+<h3>Developing Themes</h3>
+
+<ul>
+<li><a title="Learning to Design and Code for Magento Themes «  Mike Smullin" href="http://www.mikesmullin.com/development/learning-to-design-and-code-for-magento-themes/">Learning to Design and Code for Magento Themes</a></li>
+<li><a title="Magento - Designer's Guide to Magento  - eCommerce Software for Growth" href="http://www.magentocommerce.com/design_guide/articles/how-magento-builds-content">Designer&#8217;s Guide to Magento</a></li>
+<li><a title="Web Design Tips: Configuring Templates, Adding a Product Grid in Magento  | Practical eCommerce" href="http://www.practicalecommerce.com/articles/1037-Web-Design-Tips-Configuring-Templates-Adding-a-Product-Grid-in-Magento-">Configuring Templates, Adding a Product Grid in Magento</a></li>
+<li><a title="Cult-foo     » Magento Template Advices" href="http://www.cult-f.net/2008/11/17/magento-template-advices/">Magento Template Advices</a></li>
+</ul>
+
+
+<h3>Custom Code and Modules</h3>
+
+<ul>
+<li><a title="Writing a custom module in Magento, detailed walktrough | ActiveCodeline" href="http://activecodeline.com/writing-a-custom-module-in-magento-detailed-walktrough/">Writing a custom module in Magento, detailed walktrough</a></li>
+<li><a title="How To Write Magento Custom Module: Cash On Delivery Payment Method | Elias Interactive" href="http://eliasinteractive.com/blog/magento-create-new-payment-method-cash-on-delivery/">How To Write Magento Custom Module: Cash On Delivery Payment Method</a></li>
+<li><a title="Magento Design and Magento Development blog" href="http://www.exploremagento.com/">Magento Design and Magento Development blog</a></li>
+<li><a title="snippi | MAGENTO CODE SNIPPETS" href="http://snippi.net/">snippi | MAGENTO CODE SNIPPETS</a></li>
+<li><a title="Magento - Wiki - Create Payment Method Module" href="http://www.magentocommerce.com/wiki/how-to/create-payment-method-module">Create Payment Method Module</a></li>
+<li><a title="Tips for Twits  » Blog Archive   » Howto: Repackageable custom extension development in Magento" href="http://t.wits.sg/2009/03/31/howto-repackageable-custom-extension-development-in-magento/">HOWTO: Repackageable custom extension development in magento</a></li>
+</ul>
+
+
+<h3>API Documentation</h3>
+
+<ul>
+<li><a title="Magento Documentation (phpdoc)" href="http://docs.magentocommerce.com/">Magento Documentation (phpdoc)</a></li>
+</ul>
+
+
+<h3>Tips and Advice</h3>
+
+<ul>
+<li><a title="MageTips - Published by Simon Young" href="http://magetips.com/">MageTips</a></li>
+<li><a title="Magento Beginners • Hints for Start | Inchoo" href="http://inchoo.net/ecommerce/top-3-mistakes-by-magento-beginners/">Top 3 mistakes by Magento beginners</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Where to start learning Cocoa and Cappuccino?]]></title>
+    <link href="http://alistairstead.github.com/2009/07/where-to-start-learning-cocoa-and-cappuccino/"/>
+    <updated>2009-07-01T20:25:00+01:00</updated>
+    <id>http://alistairstead.github.com/2009/07/where-to-start-learning-cocoa-and-cappuccino</id>
+    <content type="html"><![CDATA[<p><img src="http://alistairstead.github.com/images/posts/cocoa-cappuccino.jpg" title="'Where to start learning Cocoa and Cappuccino'" ></p>
+
+<p>I don&#8217;t think I&#8217;m alone in the fact that over the past twelve months I have been learning Cocoa specifically Cocoa Touch for the iPhone. Apps and tutorials will follow! However I have also been looking at Cappuccino (<a href="http://cappuccino.org/">http://cappuccino.org/</a>) a direct port of Cocoa to JavaScript. The intention of Cocoa and Cappuccino is to make the development of applications a quick, simple and fun exercise, however if like me you are approaching this from a web development standpoint those first steps can be a little hard.</p>
+
+<p>However I have found a set of resources that will be invaluable if you too are trying to get to grips with Cocoa or Cappuccino.</p>
+
+<!--more-->
+
+
+<h2>Cocoa &amp; Objective-C</h2>
+
+<p>Cocoa is an Object Orientated MVC framework build in Objective-C a superset of C. It is the framework used to develop the native applications for Mac and the iPhone. It is a well proven framework created and supported by Apple with a vast developer community.</p>
+
+<h2>Cappuccino &amp; Objective-J</h2>
+
+<p>Cappuccino is and Object Orientated MVC framework built in Objective-J a superset of JavaScript. It is a direct port of Cocoa by the guys behind (http://www.280north.com/). It runs directly in any JavaScript enabled web browser. Cappuccino has been used in a number of applications such as:</p>
+
+<ul>
+<li><a href="http://280slides.com/">http://280slides.com/</a></li>
+<li><a href="http://almost.at/">http://almost.at/</a></li>
+</ul>
+
+
+<h2>Where do you start?</h2>
+
+<p>Cocoa has vast amounts of very very high quality documentation on the Apple site (http://developer.apple.com/) however it is not the most accessible read. It is amazing once you have made those first steps but there are not many step by step tutorials or lesson based examples. However after a lot of searching and reading I have found some great starting points:</p>
+
+<ul>
+<li><a href="http://andymatuschak.org/articles/2007/09/09/getting-started-with-cocoa-a-friendlier-approach/">http://andymatuschak.org/articles/2007/09/09/getting-started-with-cocoa-a-friendlier-approach/</a></li>
+<li><a href="http://cocoadevcentral.com/">http://cocoadevcentral.com/</a></li>
+<li><a href="http://www.teachmecocoa.com/">http://www.teachmecocoa.com/</a></li>
+</ul>
+
+
+<p>Cappuccino when compared to Cocoa is in it&#8217;s infancy. As such the documentation is not as complete, however you can transfer a lot of knowledge from the Cocoa documentation. Again here is a list of the resources I have found when learning Cappuccino:</p>
+
+<ul>
+<li><a href="http://www.littletreesoftware.com/blog/">http://www.littletreesoftware.com/blog/</a></li>
+<li><a href="http://cappuccino.org/learn/tutorials/">http://cappuccino.org/learn/tutorials/</a></li>
+<li><a href="http://cappuccino.org/learn/documentation/">http://cappuccino.org/learn/documentation/</a></li>
+</ul>
+
+
+<h2>Conclusion</h2>
+
+<p>These frameworks can be very daunting at first and the syntax alien but after I while using them they can be a very intuitive and expressive languages. The Cocoa community is very large with a wealth of knowledge however it appears that not may developers pass on the experiences online so it can be very hard to find good examples online. Cappuccino opens the door for existing Cocoa developers to move to building for the web. This hopefully will lead to much more content being made available for people new to the language.</p>
+
+<p>I have found the learning Cappuccino and Cocoa together very helpful and the examples I have found transfer very well. I look forward to seeing the rich web applications that will come out of the meeting of these two communities and technologies.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[sfPokaYokePlugin symfony Client Side Validation]]></title>
+    <link href="http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation/"/>
+    <updated>2009-01-14T22:34:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation</id>
+    <content type="html"><![CDATA[<p>The <code>sfPokaYokePlugin</code> (pronounced with the &#8216;e&#8217; on the end e.g. poka-yoki).  Simply put it is the use of simple mechanisms that stop mistakes being made.   sfPokaYoke provides client-side form validation based on existing <code>action.yml</code> validation files.  This validator will provide fully configurable inline errors on blur events and listed errors once the form is submitted.</p>
+
+<p>This plugin was built after reading &#8220;Designing the Obvious&#8221; by Robert Hoekman, jr. and working with a number of unsatisfactory  validation libraries. It is intended that this plugin will allow you to configure the validation and feedback to make your forms poka yoke devices i.e. impossible for users to make any errors while entering data.</p>
+
+<p>Thanks to Alon Noy for a starting point for the validators! The following symfony validators have been ported to JavaScript implemented in the plugin:</p>
+
+<ul>
+<li>sfStringValidator</li>
+<li>sfNumberValidator</li>
+<li>sfRegexValidator</li>
+<li>sfEmailValidator</li>
+<li>sfCompareValidator</li>
+</ul>
+
+
+<p>I also plan to implement a client side callback validator that will allow you to call your own client side validators or even call ajax function to run server side validation in real time.</p>
+
+<!--more-->
+
+
+<h2>Installation</h2>
+
+<p>To install the plugin you can either download the latest files from the symfony wiki or you can checkout the SVN version.</p>
+
+<h3>Install the plugin</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>symfony plugin-install http://plugins.symfony-project.com/sfPokaYokePlugin
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Add the sfPokaYoke filter to your app filters.yml</h3>
+
+<figure class='code'><figcaption><span>filters.yml</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">rendering</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">web_debug</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">security</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># generally, you will want to insert your own filters here</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">poka_yoke</span><span class="p-Indicator">:</span>
+</span><span class='line'><span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfPokaYokeFilter</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">cache</span><span class="p-Indicator">:</span>     <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">common</span><span class="p-Indicator">:</span>    <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">flash</span><span class="p-Indicator">:</span>     <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">execution</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Clear you cache</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>symfony cc
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You&#8217;re done. Any forms that have validation rules will have client-side rules applied too. sfPokaYoke looks for validation rules that match the action name the form will be submitted to. This will also now work with named routes.</p>
+
+<h2>Usage Example</h2>
+
+<p>Once any validation rules are applied to the actions for your form, rules will be created for the client-side validation.</p>
+
+<p>You can configure the client side validation to be triggered on the form submit or when the individual field loses focus. This is done by adding config values to your app.yml and will define how sfPokaYokePlugin responds to the users interaction</p>
+
+<p>If the input value fails any validation rules that error will be inserted next to the input.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="cp">&lt;?php echo form_error(&#39;name&#39;) ?&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You do not need to add any <code>&lt;div&gt;</code> tags to capture these in-line errors unless you have a specific location in you form markup where you wish the error to be displayed. sfPokaYoke will look for the symfony form error locations and use those <code>&lt;div&gt;</code> tags if available.</p>
+
+<p>If your template includes the following symfony form helper, sfPokaYoke will insert the errors into this location.</p>
+
+<p>On form submission a list of all error is inserted as the first child of the form. Each listed error item has an onclick event attached to allow the user to click on the error to focus the form field and resolve the problem.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;ul</span> <span class="na">id=</span><span class="s">&quot;pkykGlobalErrors&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;globalErrorTitle&quot;</span><span class="nt">&gt;</span>The following form information has been completed but it contains errors:<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;errors&quot;</span> <span class="na">id=</span><span class="s">&quot;pkykGlobal_username&quot;</span><span class="nt">&gt;</span>Please enter your username.<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;errors&quot;</span> <span class="na">id=</span><span class="s">&quot;pkykGlobal_password&quot;</span><span class="nt">&gt;</span>Please enter your password.<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As each input error is corrected by the user the in-line and list errors are removed.</p>
+
+<h2>Example configuration</h2>
+
+<p>The code block below is an example app.yml file entry to configure the interactions of sfPokaYoke</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="c1"># Example app.yml config for sfPokaYoke</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">pokayoke</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="c1"># Turn PokaYoke on and off</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">on</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>    <span class="c1"># Turn on the debuging this will cause alerts at each validation action</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">debug</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>    <span class="c1"># Event hooks - validation called on both field blur and form submit</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">validate_onblur</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">validateon_submit</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Define which events should display the inline and global form errors</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_inline_onblur</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_inline_onsubmit</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_global_onblur</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_global_onsubmit</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Inline error id=&quot;error_for(_name)&quot; and class=&quot;form_error&quot;</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">inline_id_prefix</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">error_for_</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">inline_class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">form_error</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># &amp;lt;li class=&quot;form_error&quot;&amp;gt;&amp;lt;/li&amp;gt; the global error lost class</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">form_error</span>
+</span><span class='line'>    <span class="c1"># The text used to introduce the global errors list</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_title</span><span class="p-Indicator">:</span> <span class="s">&#39;The</span><span class="nv"> </span><span class="s">following</span><span class="nv"> </span><span class="s">form</span><span class="nv"> </span><span class="s">information</span><span class="nv"> </span><span class="s">has</span><span class="nv"> </span><span class="s">been</span><span class="nv"> </span><span class="s">completed</span><span class="nv"> </span><span class="s">but</span><span class="nv"> </span><span class="s">it</span><span class="nv"> </span><span class="s">contains</span><span class="nv"> </span><span class="s">errors:&#39;</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_titleclass</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">pkyk_global_title</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add an onClick event to the items in the global list - click to focus the field with the error</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_onclick_focus</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Hello world!]]></title>
+    <link href="http://alistairstead.github.com/2009/01/hello-world/"/>
+    <updated>2009-01-14T10:58:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/01/hello-world</id>
+    <content type="html"><![CDATA[<p>Welcome to yet another wordpress blog. I have spent the last few months trying to complete my <a title="symflex cms" href="http://www.symflex.co.uk">symflex</a> cms project but have just not had the time to complete it. So rather than wait any longer and continue to delay my foray into the world of blog writing I have quickly uploaded wordpress and following the 5 minute install guide it is completely up and running.So here we are, yet another blog, yet another developer with something to say? Well I hope that a some point I write something that will be of use to someone. Here is a sneak peak at what I hope to write about over the next few posts.</p>
+
+<ul>
+<li>PokaYoke - one of my contributions to the <a title="symfony project" href="http://www.symfony-project.com">symfony</a> framework. Client side validation component that integrates with the symfony framework or that can equally well be used with any project that requires simple and very configurable clientside validation.</li>
+<li>Eclipse PDT - setting up the ideal combination of eclipse plugins for web development</li>
+<li>Parallels Virtual Appliance - setting up a Fedora based virtual machine to use as your development machine.</li>
+</ul>
+
+
+<p>So there you have it. Welcome to my blog and feel free to pass judgment</p>
+]]></content>
+  </entry>
+  
+</feed>

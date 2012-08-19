@@ -1,0 +1,349 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Propel doUpdate update multiple records in a single statement - Design Disclosure - Portfolio & Personal Blog of Alistair Stead</title>
+  <meta name="author" content="Alistair Stead">
+
+  
+  <meta name="description" content="I&#8217;ve been very busy with a number of project launches lately. While working on a little problem today I re-discovered a little gem for use with &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Design Disclosure - Portfolio & Personal Blog of Alistair Stead" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://coderwall.com/stylesheets/jquery.coderwall.css" media="all" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-287228-6']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/"><img src="/images/logo.png"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:alistairstead.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Propel doUpdate Update Multiple Records in a Single Statement</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-10-08T20:59:00+01:00" pubdate data-updated="true">Oct 8<span>th</span>, 2009</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I&#8217;ve been very busy with a number of project launches lately. While working on a little problem today I re-discovered a little gem for use with Propel to update multiple rows in a single statement, rather than iterating through a collection updating and saving each object in turn.</p>
+
+<p>This task is simple in SQL but after a while using any abstraction layer you may find like me you forget about the simple solutions as you spend you day working with complex objects and trying to hydrate custom objects. Blah blah blah&#8230;</p>
+
+<p>The complex solution to a simple problem:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="cp">&lt;?php</span>
+</span><span class='line'><span class="c1">// Obtain the connection configured</span>
+</span><span class='line'><span class="nv">$conn</span> <span class="o">=</span> <span class="nx">Propel</span><span class="o">::</span><span class="na">getConnection</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">DATABASE_NAME</span><span class="p">);</span>
+</span><span class='line'><span class="c1">// Create a Criteria object that will select the correct rows from the database</span>
+</span><span class='line'><span class="nv">$selectCriteria</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Criteria</span><span class="p">();</span>
+</span><span class='line'><span class="nv">$selectCriteria</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">COLUMB_TO_SELECT</span><span class="p">,</span> <span class="s1">&#39;value_to_match&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="c1">// Create a Criteria object includes the value you want to set</span>
+</span><span class='line'><span class="nv">$updateCriteria</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Criteria</span><span class="p">();</span>
+</span><span class='line'><span class="nv">$updateCriteria</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">COLUMB_TO_CHANGE</span><span class="p">,</span> <span class="s1">&#39;value_to_be_set&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="c1">// Execute the query</span>
+</span><span class='line'><span class="nx">BasePeer</span><span class="o">::</span><span class="na">doUpdate</span><span class="p">(</span><span class="nv">$selectCriteria</span><span class="p">,</span> <span class="nv">$updateCriteria</span><span class="p">,</span> <span class="nv">$conn</span><span class="p">);</span>
+</span><span class='line'><span class="cp">?&gt;</span><span class="x"></span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Thats it! I hope it helps&#8230;</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alistair Stead</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-10-08T20:59:00+01:00" pubdate data-updated="true">Oct 8<span>th</span>, 2009</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/php/'>PHP</a>, <a class='category' href='/blog/categories/symfony/'>Symfony</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/" data-via="alistairstead" data-counturl="http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/2009/07/how-to-magento-ecommerce-tutorials/" title="Previous Post: How to: Magento eCommerce help and tutorials">&laquo; How to: Magento eCommerce help and tutorials</a>
+      
+      
+        <a class="basic-alignment right" href="/2009/11/yui-connect-asynchronous-file-uploads/" title="next Post: YUI Connect asynchronous file uploads">YUI Connect asynchronous file uploads &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/2012/04/deploy-magento-with-capistrano/">Deploy Magento with Capistrano</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2012/02/updated-blog/">Updated Blog</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/package-and-install-your-latest-magento-1-5-extension/">Package and Install your latest Magento 1.5+ extension</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/testing-magento-checkout/">Testing Magento Checkout</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/02/magetool-update-v0-3-0/">MageTool Update v0.3.0</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <a href="http://www.phpconference.nl" title="DPC (Dutch PHP Conference) 2012"><img src="/images/dpc_block_speaker.png"></a>
+</section>
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("alistairstead", 5, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/alistairstead" class="twitter-follow-button" data-show-count="true">Follow @alistairstead</a>
+  
+</section>
+
+
+<section>
+  <h1>On Delicious</h1>
+  <div id="delicious"></div>
+  <script type="text/javascript" src="http://feeds.delicious.com/v2/json/threethirdsfull?count=5&amp;sort=date&amp;callback=renderDeliciousLinks"></script>
+  <p><a href="http://delicious.com/threethirdsfull">My Delicious Bookmarks &raquo;</a></p>
+</section>
+
+
+
+
+<section>
+<h1>Flickr</h1>
+<ul id="flickr">
+    <li class="loading">Flickr updating...</li>
+</ul>
+<script lang="Javascript">
+var flickrNickname = "alistairstead";
+function jsonFlickrApi(rsp) {
+    if (rsp.stat != "ok"){
+        return;
+     }
+     var list = "";
+     for (var i=0; i < rsp.photos.photo.length; i++) {
+         var photo    = rsp.photos.photo[i];
+         var imgUrl   = 'http://farm'+ photo.farm +'.static.flickr.com/'+ photo.server +'/'+ photo.id +'_'+ photo.secret +'_m.jpg';
+         var photoUrl = 'http://www.flickr.com/photos/'+ flickrNickname +'/'+ photo.id;
+         list += '<li id="flickrItem_'+i+'"><a href="'+ photoUrl +'" title="'+ photo.title +'"><img alt="'+ photo.title +'" src="'+ imgUrl +'" /></a></li>';
+     }
+     list += '<li class="flickrLink"><a href="http://www.flickr.com/photos/'+ flickrNickname + '">Flickr page</a></li>';
+     document.getElementById('flickr').innerHTML = list;
+}
+</script>
+<script lang="Javascript" src="http://api.flickr.com/services/rest/?format=json&method=flickr.photos.search&user_id=59867780@N04&per_page=5&api_key=59bddff8d357f363307238fa34f9c9ea"></script>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Alistair Stead -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+<img class="right" src="/images/greyscale-logo.png">
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'designdisclosurecom';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/';
+        var disqus_url = 'http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

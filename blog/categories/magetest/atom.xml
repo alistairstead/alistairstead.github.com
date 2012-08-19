@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: MageTest | Design Disclosure - Portfolio & Personal Blog of Alistair Stead]]></title>
+  <link href="http://alistairstead.github.com/blog/categories/magetest/atom.xml" rel="self"/>
+  <link href="http://alistairstead.github.com/"/>
+  <updated>2012-08-19T22:21:38+01:00</updated>
+  <id>http://alistairstead.github.com/</id>
+  <author>
+    <name><![CDATA[Alistair Stead]]></name>
+    <email><![CDATA[alistair.stead@designdisclosure.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Testing Magento Checkout]]></title>
+    <link href="http://alistairstead.github.com/2011/03/testing-magento-checkout/"/>
+    <updated>2011-03-15T18:40:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/03/testing-magento-checkout</id>
+    <content type="html"><![CDATA[<p>While developing new functionality in Magento one of the key elements that you must ensure continues to work as expected is the checkout. After all an commerce website that can not trade is rather worthless.</p>
+
+<p>Using <a title="Mage-Test" href="http://github.com/alistairstead/Mage-Test">Mage-Test</a> you can easily create integration tests for the checkout process. This will allow you to ensure that your store still functions correctly after you have made any modifications.</p>
+
+<h2>Automated Integration Test</h2>
+
+<p>The example test method below is run within a Mage-Test controller test case.</p>
+
+<p>``` php
+&lt;?php
+/<em>*
+ * @author Alistair Stead
+ * @test
+ </em>/
+public function magentoCheckoutIntegrationTest()
+{</p>
+
+<pre><code>// Add the product to the basket
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'product' =&gt; '16',
+            'related_product' =&gt; '',
+            'qty' =&gt; '1'
+        )
+    );
+// Set an initial cookie so that the Magento cookie validation passes
+$this-&gt;request-&gt;setCookie('mage-test', true);
+$this-&gt;dispatch('/checkout/cart/add/');
+$this-&gt;assertResponseCode('302', '/checkout/cart/add/ has not redirected to the cart');
+$this-&gt;assertRedirectRegex("/^.*checkout.*$/", 'We are not directed to the checkout as expected');
+$this-&gt;reset();
+
+// Set the checkout as guest
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'method' =&gt; 'guest'
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveMethod/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveMethod/ has not responded as expected');
+$this-&gt;reset();
+
+// Save billing address
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'billing' =&gt; array(
+                'address_id' =&gt; '',
+                'firstname' =&gt; 'Authorize',
+                'lastname' =&gt; 'Capture',
+                'company' =&gt; '',
+                'email' =&gt; 'user@mage-test.co.uk',
+                'street' =&gt; array('Flat 14b', 'Baker Street'),
+                'city' =&gt; 'London',
+                'region_id' =&gt; '',
+                'postcode' =&gt; 'W1B OW3',
+                'country_id' =&gt; 'GB',
+                'telephone' =&gt; '+44 1234 123456',
+                'fax' =&gt; '+44 1234 123456',
+                'customer_password' =&gt; '',
+                'confirm_password' =&gt; '',
+                'save_in_address_book' =&gt; '1',
+                'use_for_shipping' =&gt; '1'
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveBilling/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveBilling/ has not responded as expected');
+$this-&gt;reset();
+
+// Set shipping method
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'shipping_method' =&gt; 'flatrate_flatrate'
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveShippingMethod/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveShippingMethod/ has not responded as expected');
+$this-&gt;reset();
+
+// Save payment
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'payment' =&gt; array(
+                'method' =&gt; 'paypal_direct',
+                'cc_type' =&gt; 'SM',
+                'cc_number' =&gt; 'XXXXXXXXXXXXXXX',
+                'cc_exp_month' =&gt; '1',
+                'cc_exp_year' =&gt; (date('Y') + 6),
+                'cc_cid' =&gt; '444',
+                'cc_ss_issue' =&gt; '1',
+                'cc_ss_start_month' =&gt; '1',
+                'cc_ss_start_year' =&gt; (date('Y') - 2)
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/savePayment/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/savePayment/ has not responded as expected');
+$this-&gt;reset();
+
+// Save order
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'payment' =&gt; array(
+                'method' =&gt; 'paypal_direct',
+                'cc_type' =&gt; 'SM',
+                'cc_number' =&gt; 'XXXXXXXXXXXXXXX',
+                'cc_exp_month' =&gt; '1',
+                'cc_exp_year' =&gt; (date('Y') + 6),
+                'cc_cid' =&gt; '444',
+                'cc_ss_issue' =&gt; '1',
+                'cc_ss_start_month' =&gt; '1',
+                'cc_ss_start_year' =&gt; (date('Y') - 2)
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveOrder/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveOrder/ has not responded as expected');
+// Decode the JSON response so that we can evaluate the success
+$data = json_decode($this-&gt;response-&gt;getBody());
+$this-&gt;assertTrue(
+    $data-&gt;success,
+    "Unexpected status expected result :: {$data-&gt;error_messages}"
+);
+</code></pre>
+
+<p>}
+?>
+```</p>
+
+<p>You can use a <a title="PHPUnit" href="https://github.com/sebastianbergmann/phpunit/">PHPUnit</a> data provider to supply a set of data fixtures to be used for credit card numbers, address information and other values. Using a data provider you can test for not only the successful checkout but also the error handling within the checkout process.</p>
+]]></content>
+  </entry>
+  
+</feed>

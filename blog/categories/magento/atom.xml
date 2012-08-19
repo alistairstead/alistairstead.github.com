@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Magento | Design Disclosure - Portfolio & Personal Blog of Alistair Stead]]></title>
+  <link href="http://alistairstead.github.com/blog/categories/magento/atom.xml" rel="self"/>
+  <link href="http://alistairstead.github.com/"/>
+  <updated>2012-08-19T22:21:38+01:00</updated>
+  <id>http://alistairstead.github.com/</id>
+  <author>
+    <name><![CDATA[Alistair Stead]]></name>
+    <email><![CDATA[alistair.stead@designdisclosure.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Deploy Magento with Capistrano]]></title>
+    <link href="http://alistairstead.github.com/2012/04/deploy-magento-with-capistrano/"/>
+    <updated>2012-04-11T23:46:00+01:00</updated>
+    <id>http://alistairstead.github.com/2012/04/deploy-magento-with-capistrano</id>
+    <content type="html"><![CDATA[<p>So you have a Magento project and there must be a better way than you currently have to deploy your code to a server? Well there are many ways to do this from FTP/SFTP, rsync or SCM checkouts. You could even build a package and deploy using a package manager. However there is one options that from experience fits all eventualities and can be turned into a repeatable process where you don't have to remember a list of manual steps. It can even have inbuilt functionality to revert a deployment if for some reason you need to.</p>
+
+<h2>What would we like from a deployment system</h2>
+
+<ul>
+<li>Fast deployment.</li>
+<li>Repeatable process.</li>
+<li>Remove all manual steps or tasks.</li>
+<li>Easy and quick roll back to a previous state.</li>
+<li>Simple to use once setup.</li>
+</ul>
+
+
+<h2>Extra credits</h2>
+
+<ul>
+<li>Extensible to cover your specific needs.</li>
+<li>Work across a cluster of servers .</li>
+<li>Work across servers with different roles for the application.</li>
+</ul>
+
+
+<p><span class='pullquote-right' data-pullquote='Capistrano - provides all of the features we are looking for, plus all the extra credit features and more.'>
+Capistrano originally developed to deploy Ruby on Rails applications has evolved through a number of iterations to become a general purpose deployment tool that can be used for deploying any type of code base or packaged application. Capistrano - provides all of the features we are looking for, plus all the extra credit features and more. It has been used for many projects and is tried and trusted in the PHP community too. You will find many existing Capistrano scripts or pre-packaged Gems that provide functionality to deploy specific PHP applications and to deal with their specific requirements including Magentify.
+</span></p>
+
+<!--more-->
+
+
+<h2>Magentify</h2>
+
+<p>I have created a specific Gem extension to Capistrano that will provide the specific functionality you need to deploy a Magento project with Capistrano. This can be easily installed and configured to you exact deployment requirements.</p>
+
+<h3>Prerequisites</h3>
+
+<ol>
+<li>You must have SSH access to each of the machines you will be deploying to.</li>
+<li>You must have the same user and password on each of these machines but ideally you will have an SSH Key setup to provide access.</li>
+</ol>
+
+
+<h3>Install</h3>
+
+<p>To use Capistrano it needs to be installed on a single machine. The machine that will be running the deployment. For my personal projects that is my laptop but for work projects we have a central deployment server that is all setup for this purpose.</p>
+
+<pre><code>$ gem install capistrano
+$ gem install magentify
+</code></pre>
+
+<p><strong><em>You may need to add <code>sudo</code> to these install commands depending upon your user and access levels.</em></strong></p>
+
+<h3>Magentify your Magento project</h3>
+
+<p>Although you can use an alternate structure by modifying the paths in the generated configuration file. I prefer to use a directory structure that allows me to keep my project tools within a project codebase. Maintaining them in source control but outside of the public document root and away from harm. This article is written with the assumption that your code repository looks something like this but you are free to use the structure that suite you:</p>
+
+<pre><code>.
+├── README.md
+├── public # This is our Magento src code and eventual web server doc root
+│   ├── LICENSE.html
+│   ├── LICENSE.txt
+│   ├── LICENSE_AFL.txt
+│   ├── RELEASE_NOTES.txt
+│   ├── app
+│   ├── cron.php
+│   ├── cron.sh
+│   ├── downloader
+│   ├── errors
+│   ├── favicon.ico
+│   ├── get.php
+│   ├── includes
+│   ├── index.php
+│   ├── index.php.sample
+│   ├── install.php
+│   ├── js
+│   ├── lib
+│   ├── mage
+│   ├── media
+│   ├── php.ini.sample
+│   ├── shell
+│   ├── skin
+│   └── var
+└── tools
+    ├── capistrano # This is where we will create our Capistrano scripts
+    ├── chef
+    └── vagrant
+</code></pre>
+
+<p>Run the following command to initialize your project with the base Magento specific Capistrano configuration that we will update to your specific requirements.</p>
+
+<pre><code>$ cd tools/capistrano
+$ magentify .
+</code></pre>
+
+<p>This will generate the following files:</p>
+
+<pre><code>.
+├── capistrano
+│   ├── Capfile
+│   └── config
+│       └── deploy.rb
+</code></pre>
+
+<p>In order to configure and customize the deployment to your specific needs you will need to edit <code>deploy.rb</code></p>
+
+<p>``` ruby deploy.rb
+set :application, "set your application name here"
+set :domain,      "#{application}.com"
+set :deploy_to,   "/var/www/#{domain}"</p>
+
+<p>set :repository,  "git@github.com:/user_name/#{application}.git" # Enter the path to your SCM repository e.g. Github
+set :scm,         :git</p>
+
+<h1>Or: <code>accurev</code>, <code>bzr</code>, <code>cvs</code>, <code>darcs</code>, <code>subversion</code>, <code>mercurial</code>, <code>perforce</code>, <code>subversion</code> or <code>none</code></h1>
+
+<p>role :web, 111.111.111.111   # Your HTTP server, Apache/etc
+role :app, 111.111.111.111   # This may be the same as your <code>Web</code> server or a separate administration server</p>
+
+<p>set  :keep_releases,  3</p>
+
+<h1>Turn off use of sudo if your user does not need elevated permissions</h1>
+
+<p>set :use_sudo, false</p>
+
+<p>set :app_symlinks, ["public/media", "public/var", "public/sitemaps", "public/staging"]
+set :app_shared_dirs, ["public/app/etc", "public/sitemaps", "public/media", "public/var", "public/staging"]
+set :app_shared_files, ["public/app/etc/local.xml"]
+```</p>
+
+<p>Once you have configured the details of your application and the servers you wish to deploy your code to you can run the Capsitrano commands. You should run the Capistrano commands from the <code>tools/capistrano</code> directory so that the configuration you have created will be used.</p>
+
+<h3>Configure your servers</h3>
+
+<p>For full details of the options you can use in the configuration file it might be worth reading <a href="https://github.com/capistrano/capistrano/wiki/2.x-Getting-Started">Capistrano Getting Started</a> or if you have time a slightly longer article that will cover all of your questions, <a href="https://github.com/capistrano/capistrano/wiki/2.x-From-The-Beginning">Capistrano from the Beginning</a>.</p>
+
+<h4>Hosts</h4>
+
+<p>Capistrano is designed specifically to deploy to many servers. It can deploy code to 1 to 'n' servers with minimal configuration. In the configuration above we are deploying to two servers one public web server and one admin server. If you need to deploy to more servers you simply need to add config lines for each of the additional servers.</p>
+
+<p><code>ruby deploy.rb
+role :web, 111.111.111.101   # Web server 1
+role :web, 111.111.111.102   # Web server 2
+role :web, 111.111.111.103   # Web server 3
+role :web, 111.111.111.104   # Web server 4
+role :app, 111.111.111.110   # Database and administration server
+</code></p>
+
+<h4>Roles</h4>
+
+<p>You don't simply have to deploy code to all of your servers in your cluster. You can define and configure roles applied to your servers so that the correct actions are carried out on each of the servers when you run your deployment tasks.</p>
+
+<h4>SCM</h4>
+
+<p>Capistrano will integrate directly with your preferred source control system. It has specific features for each system providing alternate strategies to limit the amount of data that is transferred.</p>
+
+<p><code>ruby deploy.rb
+set :repository,  "git@github.com:/user_name/magento_application.git"
+set :scm,         :git
+</code></p>
+
+<h3>Setup</h3>
+
+<p>The first task you should run is the <code>deploy:setup</code> this will connect to each of the servers you configured in the previous steps. For those servers with roles that should include a code checkout it will create a set of directories into which your code will be checked out.</p>
+
+<pre><code>$ cap deploy:setup
+</code></pre>
+
+<p>You can then run <code>deploy:check</code> to confirm that each of the servers you configured previously have all of the prerequisite software, access and setting to complete the code checkout and all of the deployment tasks.</p>
+
+<pre><code>$ cap deploy:check
+</code></pre>
+
+<h3>Deploy</h3>
+
+<p>Once you are ready to deploy your code to the server(s) you can run the default <code>deploy</code> task. This will connect to each of the servers you have configured and create a new release of your application code on the server. Once all of the servers have the complete version of the code and a synchronized, the symlink for the current release will be updated. This final step takes milliseconds, meaning that this deployment can be run on production servers and in most cases users will not see the deployment happen as it is so quick and ensures not users can access an incomplete release.</p>
+
+<pre><code>$ cap deploy
+</code></pre>
+
+<p>Files that are located within the shared directory e.g. <code>local.xml</code> configuration or uploaded images are maintained between releases. Images uploaded by users should not be maintained in source control so it is key that they are kept in a safe location not changed between releases.</p>
+
+<h3>Roll Back</h3>
+
+<p>The previous releases of the application code are maintained on the servers so if you need to revert to a previous version for some reason you can simply roll back the deployment. This a quick and repeatable process that means you always have a rollback for each deployment. A safety net included with each deployment has to be a good thing right?</p>
+
+<pre><code>$ cap deploy:rollback
+</code></pre>
+
+<h3>Cleanup</h3>
+
+<p>If you want to clean up all these past releases and only keep the last five releases, you can run the cleanup command and automatically remove the older files.</p>
+
+<pre><code>$ cap deploy:cleanup
+</code></pre>
+
+<h3>Magento Tasks</h3>
+
+<p>The Magentify scripts provide additional tasks that can be run on the servers. These tasks provide access to run a number of remote tasks that are specific to Magento. To see the full list of available tasks you can run the following command.</p>
+
+<pre><code>$ cap -T
+</code></pre>
+
+<p>You can see the Magento specific tasks in the <code>magento</code> namespace.</p>
+
+<h4>Maintenance Page</h4>
+
+<p>If you need to place the maintenance page on one or more of your servers you can use the extended Capistrano task:</p>
+
+<pre><code>$ cap mage:disable
+</code></pre>
+
+<p>The will create a <code>maintenance.flag</code> file in the document root of your magento store. Once in place magento will route all traffic through the 503 error page that you can theme to your specific needs. This will prevent access to any part of your magento store including the admin.</p>
+
+<p><em>You can of course customise this behaviour to meet your needs or to provide access from your specific IP address.</em></p>
+
+<p>To remove the maintenance page and allow general customers to access your store again. Run the following Capistrano command:</p>
+
+<pre><code>$ cap mage:enable
+</code></pre>
+
+<h4>Clear Cache</h4>
+
+<p>This command currently clears the Magento file based cache but can be extended to clear the specific cache system you are using with your installation.</p>
+
+<pre><code>$ cap mage:cc
+</code></pre>
+
+<h4>Compiler</h4>
+
+<p>The compiler commands provide a mechanism to enable and disable the Magento compiler. There is also a step in deployment that will compile Magento on each deployment.</p>
+
+<pre><code>$ cap mage:enable_compiler
+
+$ cap mage:disable_compiler
+</code></pre>
+
+<h4>Indexes</h4>
+
+<p>The indexer command will run the Magento indexers using the shell script. This will populate the index tables following any data changes during deployment.</p>
+
+<pre><code>$ cap mage:indexer
+</code></pre>
+
+<h3>What next?</h3>
+
+<p>You can extend the script to include your own specific requirements. You will find a wealth of information available to you about <a href="https://github.com/capistrano/capistrano/wiki">Capistrano</a> and creating custom tasks.</p>
+
+<p><span class='pullquote-right' data-pullquote='be careful giving your clients the tools to make bad things happen.'>
+If you want to add a GUI to your deployment so that none technical people can run the deployment processes or any of the additional tasks that you make available however, be careful giving your clients the tools to make bad things happen. Tool such as <a href="https://github.com/peritor/webistrano/wiki">Webistrano</a> or <a href="https://github.com/joelmoss/strano">Strano</a> provide a graphical interface on top of the command line functionality of Capistrano.
+</span></p>
+
+<p>This is an open source project feel free to <a href="https://github.com/alistairstead/Magentify/fork_select">fork</a> the code and extend it with new features. Just send me pull requests and I will integrate them with the project. If you don't have the time to create the features then <a href="https://github.com/alistairstead/Magentify/issues">submit feature requests</a> and maybe the community can help.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Package and Install your latest Magento 1.5+ extension]]></title>
+    <link href="http://alistairstead.github.com/2011/03/package-and-install-your-latest-magento-1-5-extension/"/>
+    <updated>2011-03-26T21:40:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/03/package-and-install-your-latest-magento-1-5-extension</id>
+    <content type="html"><![CDATA[<p>After spending many hours crafting the perfect Magento module you need to package it either for easy distribution to your client/team or to upload to Magento Connect.</p>
+
+<h2>Package the extension</h2>
+
+<p>First of all I would recommend reading the following wiki page;</p>
+
+<ul>
+<li><a href="http://www.magentocommerce.com/wiki/7_-_magento_connect/packaging_a_magento_extension_in_1.5">Packaging a Magento Extension in 1.5+</a></li>
+</ul>
+
+
+<p><strong>Note - If your planning to upload your module to Magento Connect ensure the package name and the name you enter on Magento Connect match</strong></p>
+
+<!--more-->
+
+
+<h2>Installing a module from a local package</h2>
+
+<p>Internally Magento uses a localised and enhanced version of Pear to manage packages and to distribute and install extensions. Since version 1.4.* the internal pear script has been renamed to mage. In order to use the mage script to run any of the commands it provides you first need to ensure that the executable bit is set for your user.</p>
+
+<p><code>sh
+$ sudo chmod 775 ./mage
+</code></p>
+
+<p>Once your user has permission to execute this script you can run it without any arguments to see a full list of commands;</p>
+
+<p><code>sh
+$ ./mage
+</code></p>
+
+<p>This will list all of the available commands. You can use this script to install remote extensions from Magento Connect or to install local packages such as the one you have just built. To install the local package you need to use the following command, changing the path and package name for the extension to the location of your files.</p>
+
+<p><code>sh
+$ ./mage install-file var/connect/PackageName-0.1.12.tgz
+</code></p>
+
+<p>Thats it your done… Or at least you should be. If you are testing the package in the version of Magento you used to build the package remember to remove the original files first or you will get a bunch of errors. The error output is generally very helpful, simply do what is suggested and try the install again.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Testing Magento Checkout]]></title>
+    <link href="http://alistairstead.github.com/2011/03/testing-magento-checkout/"/>
+    <updated>2011-03-15T18:40:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/03/testing-magento-checkout</id>
+    <content type="html"><![CDATA[<p>While developing new functionality in Magento one of the key elements that you must ensure continues to work as expected is the checkout. After all an commerce website that can not trade is rather worthless.</p>
+
+<p>Using <a title="Mage-Test" href="http://github.com/alistairstead/Mage-Test">Mage-Test</a> you can easily create integration tests for the checkout process. This will allow you to ensure that your store still functions correctly after you have made any modifications.</p>
+
+<h2>Automated Integration Test</h2>
+
+<p>The example test method below is run within a Mage-Test controller test case.</p>
+
+<p>``` php
+&lt;?php
+/<em>*
+ * @author Alistair Stead
+ * @test
+ </em>/
+public function magentoCheckoutIntegrationTest()
+{</p>
+
+<pre><code>// Add the product to the basket
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'product' =&gt; '16',
+            'related_product' =&gt; '',
+            'qty' =&gt; '1'
+        )
+    );
+// Set an initial cookie so that the Magento cookie validation passes
+$this-&gt;request-&gt;setCookie('mage-test', true);
+$this-&gt;dispatch('/checkout/cart/add/');
+$this-&gt;assertResponseCode('302', '/checkout/cart/add/ has not redirected to the cart');
+$this-&gt;assertRedirectRegex("/^.*checkout.*$/", 'We are not directed to the checkout as expected');
+$this-&gt;reset();
+
+// Set the checkout as guest
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'method' =&gt; 'guest'
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveMethod/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveMethod/ has not responded as expected');
+$this-&gt;reset();
+
+// Save billing address
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'billing' =&gt; array(
+                'address_id' =&gt; '',
+                'firstname' =&gt; 'Authorize',
+                'lastname' =&gt; 'Capture',
+                'company' =&gt; '',
+                'email' =&gt; 'user@mage-test.co.uk',
+                'street' =&gt; array('Flat 14b', 'Baker Street'),
+                'city' =&gt; 'London',
+                'region_id' =&gt; '',
+                'postcode' =&gt; 'W1B OW3',
+                'country_id' =&gt; 'GB',
+                'telephone' =&gt; '+44 1234 123456',
+                'fax' =&gt; '+44 1234 123456',
+                'customer_password' =&gt; '',
+                'confirm_password' =&gt; '',
+                'save_in_address_book' =&gt; '1',
+                'use_for_shipping' =&gt; '1'
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveBilling/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveBilling/ has not responded as expected');
+$this-&gt;reset();
+
+// Set shipping method
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'shipping_method' =&gt; 'flatrate_flatrate'
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveShippingMethod/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveShippingMethod/ has not responded as expected');
+$this-&gt;reset();
+
+// Save payment
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'payment' =&gt; array(
+                'method' =&gt; 'paypal_direct',
+                'cc_type' =&gt; 'SM',
+                'cc_number' =&gt; 'XXXXXXXXXXXXXXX',
+                'cc_exp_month' =&gt; '1',
+                'cc_exp_year' =&gt; (date('Y') + 6),
+                'cc_cid' =&gt; '444',
+                'cc_ss_issue' =&gt; '1',
+                'cc_ss_start_month' =&gt; '1',
+                'cc_ss_start_year' =&gt; (date('Y') - 2)
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/savePayment/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/savePayment/ has not responded as expected');
+$this-&gt;reset();
+
+// Save order
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'payment' =&gt; array(
+                'method' =&gt; 'paypal_direct',
+                'cc_type' =&gt; 'SM',
+                'cc_number' =&gt; 'XXXXXXXXXXXXXXX',
+                'cc_exp_month' =&gt; '1',
+                'cc_exp_year' =&gt; (date('Y') + 6),
+                'cc_cid' =&gt; '444',
+                'cc_ss_issue' =&gt; '1',
+                'cc_ss_start_month' =&gt; '1',
+                'cc_ss_start_year' =&gt; (date('Y') - 2)
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveOrder/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveOrder/ has not responded as expected');
+// Decode the JSON response so that we can evaluate the success
+$data = json_decode($this-&gt;response-&gt;getBody());
+$this-&gt;assertTrue(
+    $data-&gt;success,
+    "Unexpected status expected result :: {$data-&gt;error_messages}"
+);
+</code></pre>
+
+<p>}
+?>
+```</p>
+
+<p>You can use a <a title="PHPUnit" href="https://github.com/sebastianbergmann/phpunit/">PHPUnit</a> data provider to supply a set of data fixtures to be used for credit card numbers, address information and other values. Using a data provider you can test for not only the successful checkout but also the error handling within the checkout process.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[MageTool Update v0.3.0]]></title>
+    <link href="http://alistairstead.github.com/2011/02/magetool-update-v0-3-0/"/>
+    <updated>2011-02-09T14:27:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/02/magetool-update-v0-3-0</id>
+    <content type="html"><![CDATA[<p>While at Magento Imagine I have used the time where I was awake due to jet lag to finish a couple of new features to <a title="MageTool" href="http://www.magetool.co.uk/" target="_blank">MageTool</a>.</p>
+
+<p>MageTool v0.3.0 now includes:</p>
+
+<ul>
+<li>Improved feedback when running commands for mage-core-resource</li>
+<li>Added commands to query and run the Magento indexer</li>
+<li>Added commands to query and run the Magento compiler</li>
+<li>Improved mage-core-cache commands</li>
+<li>Added functionality to run individual module setup classes directly</li>
+<li>Added functionality to dispatch Magento events to test your observers</li>
+</ul>
+
+
+<p>All of these commands are intended to make development of Magento extensions easier and more streamlined. If you have feature requests please let me know. Or if you wish feel free to fork the <a title="MageTool on Github" href="https://github.com/alistairstead/MageTool">project on GitHub</a> and add the command that you need.</p>
+
+<p>If you find and bugs with MageTool please raise a ticket on <a title="MageTool bug tracker" href="https://github.com/alistairstead/MageTool/issues">GitHub</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Magento command line tools MageTool]]></title>
+    <link href="http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool/"/>
+    <updated>2010-10-10T00:05:00+01:00</updated>
+    <id>http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool</id>
+    <content type="html"><![CDATA[<p>If you have spent any time developing with Magento I expect that like me you have found a number of tasks you find yourself repeating many many times. While developing new modules or themes there are many times when you need to clear the Magento cache or even disable it completely. Now of course you can log into the admin system and carry out these actions but have you every thought there must be an easier way?</p>
+
+<p>Many development frameworks or other open source projects have tool that can be used by developers to issue commands quickly and easily. Magento however does not have any built in tools to improve the development workflow. This is where MageTool fits in!</p>
+
+<h2>MageTool</h2>
+
+<p>How can <a href="http://github.com/alistairstead/MageTool">MageTool</a> help? Well hopefully in a number of ways. MageTool extends the existing Zend Framework command line tool zf, adding new commands that are specific to Magento development workflow. Rather then navigating the Magento admin system to clear cache or the enable or disable caching you can issue a simple command in your terminal window and achieve the same results. You can also modify the Magento configuration quickly or issue commands that will selectively update many configuration values.</p>
+
+<p>In my standard development practices I maintain a number of Magento installs on different servers. These are used for Development, Staging and UAT each using different domains to access the stores. This means however that I often need to move databases between servers, resulting in the ‘base_url’ configuration being incorrect. This can be easily updated if you have database access and is fairly simple if you only have a couple of sites setup. However if you have more sites setup this can become very very difficult to maintain and calls into question the idea of working with many environment servers during development.</p>
+
+<p>MageTool can help again in any situation where you need to move a Magento install and then update the ‘base_url’ configuration. You can construct a command that will quickly and easily update all URLs in the Magento config.</p>
+
+<!--more-->
+
+
+<h2>Install</h2>
+
+<p>First install ZF:</p>
+
+<p><code>sh
+$ sudo pear channel-discover pear.zfcampus.org
+$ sudo pear install zfcampus/zf
+</code></p>
+
+<p>Then install MageTool:</p>
+
+<p><code>sh
+$ sudo pear channel-discover pear.magetool.co.uk
+$ sudo pear install magetool/magetool
+</code></p>
+
+<p>Once you have installed ZF and MageTool you will need to create configuration for your user by creating the following file:</p>
+
+<p><code>sh
+$ vim ~/.zf.ini
+</code></p>
+
+<p>Add the following lines to load the additional MageTool commands making them available to zf:</p>
+
+<p><code>ini
+basicloader.classes.1 = "MageTool_Tool_MageApp_Provider_Manifest"
+basicloader.classes.2 = "MageTool_Tool_MageExtension_Provider_Manifest"
+</code></p>
+
+<p>After the install has completed successfully if you run zf you will see the additional commands available for Magento.</p>
+
+<p>``` sh
+  MageAdminUser</p>
+
+<pre><code>zf show mage-admin-user
+zf create mage-admin-user username email password firstname[=Admin] lastname[=User]
+</code></pre>
+
+<p>  MageCoreCache</p>
+
+<pre><code>zf clear mage-core-cache
+zf enable mage-core-cache
+zf disable mage-core-cache
+</code></pre>
+
+<p>  MageCoreResource</p>
+
+<pre><code>zf show mage-core-resource
+zf delete mage-core-resource path
+</code></pre>
+
+<p>  MageCoreConfig</p>
+
+<pre><code>zf show mage-core-config path scope
+zf set mage-core-config path scope value
+zf replace mage-core-config match value path scope
+</code></pre>
+
+<p>  MageApp</p>
+
+<pre><code>zf version mage-app
+</code></pre>
+
+<p>  MageExtension</p>
+
+<pre><code>zf create mage-extension code-pool vendor-name extension-name
+</code></pre>
+
+<p>```</p>
+
+<h2>Example Usage</h2>
+
+<h3>Cache</h3>
+
+<p>To clear the entire Magento cache simply run the following command from within the Magento project root directory:</p>
+
+<p><code>sh
+$ zf clear mage-core-cache
+</code></p>
+
+<p>To disable the entire Magento cache:</p>
+
+<p><code>sh
+$ zf disable mage-core-cache
+</code></p>
+
+<h3>Core Config</h3>
+
+<p>MageTool provides commands to show existing configuration values and to set their values. It also has an additional command that can be used to perform a str_replace on the config values. This can be used if you have moved the database from another server with a different domain to update the config values in a single command:</p>
+
+<p><code>sh
+$ zf replace mage-core-config --match www.current-domain.com --value shop.new-domain.co.uk
+</code></p>
+
+<p>This will update all the config value that include the string “www.current-domain.com” and substitute it for “shop.new-domain.co.uk”. This can also be further refined to only affect specific config paths or scopes.</p>
+
+<h3>Core Resource</h3>
+
+<p>During the development of a new extension you sometimes need to remove the resource from the internal registry to force it to re-run the install scripts. MageTool can help you first see which versions of each extensions are installed:</p>
+
+<p><code>sh
+$ zf show mage-core-resource --code mage_log
+</code></p>
+
+<p>You can also remove specific entries:</p>
+
+<p><code>sh
+$ zf delete mage-core-resource --code mage_log
+</code></p>
+
+<h3>Admin User</h3>
+
+<p>If you inherit a Magento project you may need to create a new admin user to gain access to the system. MageTool can list existing admin users and email addresses or it can create a new user for you to use.</p>
+
+<p><code>sh
+$ zf create mage-admin-user --username newadmin --email newadmin@project.com --password newpassword
+</code></p>
+
+<h2>Roadmap</h2>
+
+<p>I plan to add additional functionality to create skeleton files for new extensions or themes, removing the repetitive creation of directories and configuration files when creating new extension.</p>
+
+<p>If you have additional suggestions please let me know or alternatively you can fork the <a href="http://github.com/alistairstead/MageTool">MageTool</a> project on github and add the commands before sending me a pull request.</p>
+
+<h2>Feedback and Bugs</h2>
+
+<p>If you have any problems using MageTool or if you have any feedback or suggestions please <a href="http://github.com/alistairstead/MageTool/issues">submit them here</a>.</p>
+]]></content>
+  </entry>
+  
+</feed>

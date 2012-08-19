@@ -1,0 +1,431 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Symfony APC Cache and Memcache Session Storage - Design Disclosure - Portfolio & Personal Blog of Alistair Stead</title>
+  <meta name="author" content="Alistair Stead">
+
+  
+  <meta name="description" content="In a previous post I described some of the reasons why you would want to store your session data in an alternate location to temporary files on your &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Design Disclosure - Portfolio & Personal Blog of Alistair Stead" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://coderwall.com/stylesheets/jquery.coderwall.css" media="all" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-287228-6']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/"><img src="/images/logo.png"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:alistairstead.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Symfony APC Cache and Memcache Session Storage</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-11-30T23:22:00+00:00" pubdate data-updated="true">Nov 30<span>th</span>, 2009</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><img src="/images/posts/symfony-memcache.jpg" title="'symfony memcache'" ></p>
+
+<p>In a previous post I described some of the reasons why you would want to store your session data in an alternate location to temporary files on your server. I explained the<a title="symfony Doctrine database session storage" href="/2009/11/symfony-doctri…ession-storage/"> setup of database session storage using Doctrine</a> and how this would allow you to take advantage of storing session data in a database. However depending upon your application requirements storing your session data in a database may cause excessive load on you database. You could of course use a separate dedicated database server to store your session data. However there is an alternate setup that will allow you to centralise your session storage ready for horizontal scaling of your hosting e.g. adding additional web servers.</p>
+
+<!--more-->
+
+
+<p>symfony provides a very easy way for you to configure your application to use a number of alternate session storage strategies. In this article I will explain the steps needed to setup your application to use first APC as your session storage and then Memcache. Both of these strategies result in the session data being stored in volatile memory on your server and a cookie is stored on the client to maintain reference to the session data. You can set the lifetime of the cookie to control your session timeout.</p>
+
+<h2>Install APC and Memcached modules</h2>
+
+<p>First we need to ensure that your server has the required packages installed. I am using Ubuntu 9.04 in this example but the packages are available for your preferred linux distro. To install the required packages run the following commands.</p>
+
+<p>Install the required PHP modules and the correct version of apache to successfully install APC, then install the Pecl APC module.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo apt-get install php5-dev php-pear apache2-threaded-dev
+</span><span class='line'><span class="nv">$ </span>sudo pecl install apc
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Install memcache</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo apt-get install memcached
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Configure APC session storage</h2>
+
+<p>Once you have your server setup with the required packages you need to configure symfony to use your preferred session storage strategy. To do this you simply need to modify the factories.yml file for you application. You need to modify the section of the factories.yml that defines your application storage strategy e.g.</p>
+
+<p>Amend your factories.yml to include the following settings then change the parameters to reflect you setup such as the domain and session name.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">storage</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfCacheSessionStorage</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfproject</span> <span class="c1">#[required] name of session to use</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_path</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/</span> <span class="c1">#[required] cookie path</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_domain</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">example.com</span> <span class="c1">#[required] cookie domain</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_lifetime</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">+30 days</span> <span class="c1">#[required] liftime of cookie</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_secure</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span> <span class="c1">#[required] send only if secure connection</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_http_only</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span> <span class="c1">#[required] accessible only via http protocol</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">cache</span><span class="p-Indicator">:</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfAPCCache</span> <span class="c1">#[required] define the cache strategy</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span> <span class="c1">#[required] this empty key is required or you will get warnings</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have made this change clear the symfony cache and try your application. You will not see any noticeable difference unless you check the symfony toolbar and look for the additional cookie stored on the client.</p>
+
+<p>This example defines the use of sfAPCCache as the session storage strategy. APC stores the session data in memory on your web server making it quicker to access than reading a file or database record.</p>
+
+<h2>Configure Memcache session storage</h2>
+
+<p>To setup memcache session storage it is almost as simple. Amend your factories.yml to include the following settings then change the parameters to reflect your setup including any specific values for your memcache server if you set it up differently.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">storage</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfCacheSessionStorage</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfproject</span> <span class="c1">#[required] name of session to use</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_path</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/</span> <span class="c1">#[required] cookie path</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_domain</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">example.com</span> <span class="c1">#[required] cookie domain</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_lifetime</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">+30 days</span> <span class="c1">#[required] liftime of cookie</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_secure</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span> <span class="c1">#[required] send only if secure connection</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">session_cookie_http_only</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span> <span class="c1">#[required] accessible only via http protocol</span>
+</span><span class='line'>      <span class="l-Scalar-Plain">cache</span><span class="p-Indicator">:</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfMemcacheCache</span> <span class="c1">#[required] define the cache strategy</span>
+</span><span class='line'>        <span class="l-Scalar-Plain">param</span><span class="p-Indicator">:</span>
+</span><span class='line'>          <span class="l-Scalar-Plain">servers</span><span class="p-Indicator">:</span> <span class="c1"># Array of servers</span>
+</span><span class='line'>            <span class="l-Scalar-Plain">localserver</span><span class="p-Indicator">:</span>
+</span><span class='line'>              <span class="l-Scalar-Plain">host</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">localhost</span> <span class="c1"># hostname or IP of mamcache server</span>
+</span><span class='line'>              <span class="l-Scalar-Plain">port</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">11211</span> <span class="c1"># default memcache port</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have made this change clear your symfony cache and test your application.</p>
+
+<p>Memcache is a volatile storage strategy very similar to RAM in you PC or Mac. It is very quick to access as the session data is held in the server memory rather than in a file or database. Memcache can also be centralised onto a dedicated memcache server allowing your application to be scaled. The example above uses localhost as the memcache server but the host value of the configured server could be modified to be an alternate dedicated memcache server.</p>
+
+<p>I will be running some performance tests using these strategies and also compare the default file based session storage and also the database session storage strategy. If you have already run these tests I would be keen to see your results.</p>
+
+<p>I hope these examples prove useful. If you have any queries or questions please leave a comment.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alistair Stead</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-11-30T23:22:00+00:00" pubdate data-updated="true">Nov 30<span>th</span>, 2009</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/php/'>PHP</a>, <a class='category' href='/blog/categories/symfony/'>Symfony</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage/" data-via="alistairstead" data-counturl="http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/2009/11/symfony-doctrine-database-session-storage/" title="Previous Post: Symfony Doctrine Database Session Storage">&laquo; Symfony Doctrine Database Session Storage</a>
+      
+      
+        <a class="basic-alignment right" href="/2010/10/magento-command-line-tools-magetool/" title="next Post: Magento command line tools MageTool">Magento command line tools MageTool &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/2012/04/deploy-magento-with-capistrano/">Deploy Magento with Capistrano</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2012/02/updated-blog/">Updated Blog</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/package-and-install-your-latest-magento-1-5-extension/">Package and Install your latest Magento 1.5+ extension</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/testing-magento-checkout/">Testing Magento Checkout</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/02/magetool-update-v0-3-0/">MageTool Update v0.3.0</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <a href="http://www.phpconference.nl" title="DPC (Dutch PHP Conference) 2012"><img src="/images/dpc_block_speaker.png"></a>
+</section>
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("alistairstead", 5, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/alistairstead" class="twitter-follow-button" data-show-count="true">Follow @alistairstead</a>
+  
+</section>
+
+
+<section>
+  <h1>On Delicious</h1>
+  <div id="delicious"></div>
+  <script type="text/javascript" src="http://feeds.delicious.com/v2/json/threethirdsfull?count=5&amp;sort=date&amp;callback=renderDeliciousLinks"></script>
+  <p><a href="http://delicious.com/threethirdsfull">My Delicious Bookmarks &raquo;</a></p>
+</section>
+
+
+
+
+<section>
+<h1>Flickr</h1>
+<ul id="flickr">
+    <li class="loading">Flickr updating...</li>
+</ul>
+<script lang="Javascript">
+var flickrNickname = "alistairstead";
+function jsonFlickrApi(rsp) {
+    if (rsp.stat != "ok"){
+        return;
+     }
+     var list = "";
+     for (var i=0; i < rsp.photos.photo.length; i++) {
+         var photo    = rsp.photos.photo[i];
+         var imgUrl   = 'http://farm'+ photo.farm +'.static.flickr.com/'+ photo.server +'/'+ photo.id +'_'+ photo.secret +'_m.jpg';
+         var photoUrl = 'http://www.flickr.com/photos/'+ flickrNickname +'/'+ photo.id;
+         list += '<li id="flickrItem_'+i+'"><a href="'+ photoUrl +'" title="'+ photo.title +'"><img alt="'+ photo.title +'" src="'+ imgUrl +'" /></a></li>';
+     }
+     list += '<li class="flickrLink"><a href="http://www.flickr.com/photos/'+ flickrNickname + '">Flickr page</a></li>';
+     document.getElementById('flickr').innerHTML = list;
+}
+</script>
+<script lang="Javascript" src="http://api.flickr.com/services/rest/?format=json&method=flickr.photos.search&user_id=59867780@N04&per_page=5&api_key=59bddff8d357f363307238fa34f9c9ea"></script>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Alistair Stead -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+<img class="right" src="/images/greyscale-logo.png">
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'designdisclosurecom';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage/';
+        var disqus_url = 'http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

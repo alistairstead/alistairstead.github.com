@@ -1,0 +1,480 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Magento command line tools MageTool - Design Disclosure - Portfolio & Personal Blog of Alistair Stead</title>
+  <meta name="author" content="Alistair Stead">
+
+  
+  <meta name="description" content="If you have spent any time developing with Magento I expect that like me you have found a number of tasks you find yourself repeating many many times &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Design Disclosure - Portfolio & Personal Blog of Alistair Stead" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://coderwall.com/stylesheets/jquery.coderwall.css" media="all" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-287228-6']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/"><img src="/images/logo.png"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:alistairstead.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Magento Command Line Tools MageTool</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-10T00:05:00+01:00" pubdate data-updated="true">Oct 10<span>th</span>, 2010</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>If you have spent any time developing with Magento I expect that like me you have found a number of tasks you find yourself repeating many many times. While developing new modules or themes there are many times when you need to clear the Magento cache or even disable it completely. Now of course you can log into the admin system and carry out these actions but have you every thought there must be an easier way?</p>
+
+<p>Many development frameworks or other open source projects have tool that can be used by developers to issue commands quickly and easily. Magento however does not have any built in tools to improve the development workflow. This is where MageTool fits in!</p>
+
+<h2>MageTool</h2>
+
+<p>How can <a href="http://github.com/alistairstead/MageTool">MageTool</a> help? Well hopefully in a number of ways. MageTool extends the existing Zend Framework command line tool zf, adding new commands that are specific to Magento development workflow. Rather then navigating the Magento admin system to clear cache or the enable or disable caching you can issue a simple command in your terminal window and achieve the same results. You can also modify the Magento configuration quickly or issue commands that will selectively update many configuration values.</p>
+
+<p>In my standard development practices I maintain a number of Magento installs on different servers. These are used for Development, Staging and UAT each using different domains to access the stores. This means however that I often need to move databases between servers, resulting in the ‘base_url’ configuration being incorrect. This can be easily updated if you have database access and is fairly simple if you only have a couple of sites setup. However if you have more sites setup this can become very very difficult to maintain and calls into question the idea of working with many environment servers during development.</p>
+
+<p>MageTool can help again in any situation where you need to move a Magento install and then update the ‘base_url’ configuration. You can construct a command that will quickly and easily update all URLs in the Magento config.</p>
+
+<!--more-->
+
+
+<h2>Install</h2>
+
+<p>First install ZF:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo pear channel-discover pear.zfcampus.org
+</span><span class='line'><span class="nv">$ </span>sudo pear install zfcampus/zf
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then install MageTool:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo pear channel-discover pear.magetool.co.uk
+</span><span class='line'><span class="nv">$ </span>sudo pear install magetool/magetool
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once you have installed ZF and MageTool you will need to create configuration for your user by creating the following file:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>vim ~/.zf.ini
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Add the following lines to load the additional MageTool commands making them available to zf:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ini'><span class='line'><span class="na">basicloader.classes.1</span> <span class="o">=</span> <span class="s">&quot;MageTool_Tool_MageApp_Provider_Manifest&quot;</span>
+</span><span class='line'><span class="na">basicloader.classes.2</span> <span class="o">=</span> <span class="s">&quot;MageTool_Tool_MageExtension_Provider_Manifest&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After the install has completed successfully if you run zf you will see the additional commands available for Magento.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>  MageAdminUser
+</span><span class='line'>    zf show mage-admin-user
+</span><span class='line'>    zf create mage-admin-user username email password firstname<span class="o">[=</span>Admin<span class="o">]</span> lastname<span class="o">[=</span>User<span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  MageCoreCache
+</span><span class='line'>    zf clear mage-core-cache
+</span><span class='line'>    zf <span class="nb">enable </span>mage-core-cache
+</span><span class='line'>    zf disable mage-core-cache
+</span><span class='line'>
+</span><span class='line'>  MageCoreResource
+</span><span class='line'>    zf show mage-core-resource
+</span><span class='line'>    zf delete mage-core-resource path
+</span><span class='line'>
+</span><span class='line'>  MageCoreConfig
+</span><span class='line'>    zf show mage-core-config path scope
+</span><span class='line'>    zf <span class="nb">set </span>mage-core-config path scope value
+</span><span class='line'>    zf replace mage-core-config match value path scope
+</span><span class='line'>
+</span><span class='line'>  MageApp
+</span><span class='line'>    zf version mage-app
+</span><span class='line'>
+</span><span class='line'>  MageExtension
+</span><span class='line'>    zf create mage-extension code-pool vendor-name extension-name
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Example Usage</h2>
+
+<h3>Cache</h3>
+
+<p>To clear the entire Magento cache simply run the following command from within the Magento project root directory:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf clear mage-core-cache
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To disable the entire Magento cache:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf disable mage-core-cache
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Core Config</h3>
+
+<p>MageTool provides commands to show existing configuration values and to set their values. It also has an additional command that can be used to perform a str_replace on the config values. This can be used if you have moved the database from another server with a different domain to update the config values in a single command:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf replace mage-core-config --match www.current-domain.com --value shop.new-domain.co.uk
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This will update all the config value that include the string “www.current-domain.com” and substitute it for “shop.new-domain.co.uk”. This can also be further refined to only affect specific config paths or scopes.</p>
+
+<h3>Core Resource</h3>
+
+<p>During the development of a new extension you sometimes need to remove the resource from the internal registry to force it to re-run the install scripts. MageTool can help you first see which versions of each extensions are installed:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf show mage-core-resource --code mage_log
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can also remove specific entries:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf delete mage-core-resource --code mage_log
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Admin User</h3>
+
+<p>If you inherit a Magento project you may need to create a new admin user to gain access to the system. MageTool can list existing admin users and email addresses or it can create a new user for you to use.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>zf create mage-admin-user --username newadmin --email newadmin@project.com --password newpassword
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Roadmap</h2>
+
+<p>I plan to add additional functionality to create skeleton files for new extensions or themes, removing the repetitive creation of directories and configuration files when creating new extension.</p>
+
+<p>If you have additional suggestions please let me know or alternatively you can fork the <a href="http://github.com/alistairstead/MageTool">MageTool</a> project on github and add the commands before sending me a pull request.</p>
+
+<h2>Feedback and Bugs</h2>
+
+<p>If you have any problems using MageTool or if you have any feedback or suggestions please <a href="http://github.com/alistairstead/MageTool/issues">submit them here</a>.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alistair Stead</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-10T00:05:00+01:00" pubdate data-updated="true">Oct 10<span>th</span>, 2010</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/magento/'>Magento</a>, <a class='category' href='/blog/categories/php/'>PHP</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool/" data-via="alistairstead" data-counturl="http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/2009/11/symfony-apc-cache-and-memcache-session-storage/" title="Previous Post: Symfony APC Cache and Memcache Session Storage">&laquo; Symfony APC Cache and Memcache Session Storage</a>
+      
+      
+        <a class="basic-alignment right" href="/2011/02/magetool-update-v0-3-0/" title="next Post: MageTool Update v0.3.0">MageTool Update v0.3.0 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/2012/04/deploy-magento-with-capistrano/">Deploy Magento with Capistrano</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2012/02/updated-blog/">Updated Blog</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/package-and-install-your-latest-magento-1-5-extension/">Package and Install your latest Magento 1.5+ extension</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/testing-magento-checkout/">Testing Magento Checkout</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/02/magetool-update-v0-3-0/">MageTool Update v0.3.0</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <a href="http://www.phpconference.nl" title="DPC (Dutch PHP Conference) 2012"><img src="/images/dpc_block_speaker.png"></a>
+</section>
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("alistairstead", 5, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/alistairstead" class="twitter-follow-button" data-show-count="true">Follow @alistairstead</a>
+  
+</section>
+
+
+<section>
+  <h1>On Delicious</h1>
+  <div id="delicious"></div>
+  <script type="text/javascript" src="http://feeds.delicious.com/v2/json/threethirdsfull?count=5&amp;sort=date&amp;callback=renderDeliciousLinks"></script>
+  <p><a href="http://delicious.com/threethirdsfull">My Delicious Bookmarks &raquo;</a></p>
+</section>
+
+
+
+
+<section>
+<h1>Flickr</h1>
+<ul id="flickr">
+    <li class="loading">Flickr updating...</li>
+</ul>
+<script lang="Javascript">
+var flickrNickname = "alistairstead";
+function jsonFlickrApi(rsp) {
+    if (rsp.stat != "ok"){
+        return;
+     }
+     var list = "";
+     for (var i=0; i < rsp.photos.photo.length; i++) {
+         var photo    = rsp.photos.photo[i];
+         var imgUrl   = 'http://farm'+ photo.farm +'.static.flickr.com/'+ photo.server +'/'+ photo.id +'_'+ photo.secret +'_m.jpg';
+         var photoUrl = 'http://www.flickr.com/photos/'+ flickrNickname +'/'+ photo.id;
+         list += '<li id="flickrItem_'+i+'"><a href="'+ photoUrl +'" title="'+ photo.title +'"><img alt="'+ photo.title +'" src="'+ imgUrl +'" /></a></li>';
+     }
+     list += '<li class="flickrLink"><a href="http://www.flickr.com/photos/'+ flickrNickname + '">Flickr page</a></li>';
+     document.getElementById('flickr').innerHTML = list;
+}
+</script>
+<script lang="Javascript" src="http://api.flickr.com/services/rest/?format=json&method=flickr.photos.search&user_id=59867780@N04&per_page=5&api_key=59bddff8d357f363307238fa34f9c9ea"></script>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Alistair Stead -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+<img class="right" src="/images/greyscale-logo.png">
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'designdisclosurecom';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool/';
+        var disqus_url = 'http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: PHP | Design Disclosure - Portfolio & Personal Blog of Alistair Stead]]></title>
+  <link href="http://alistairstead.github.com/blog/categories/php/atom.xml" rel="self"/>
+  <link href="http://alistairstead.github.com/"/>
+  <updated>2012-08-19T22:21:38+01:00</updated>
+  <id>http://alistairstead.github.com/</id>
+  <author>
+    <name><![CDATA[Alistair Stead]]></name>
+    <email><![CDATA[alistair.stead@designdisclosure.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Testing Magento Checkout]]></title>
+    <link href="http://alistairstead.github.com/2011/03/testing-magento-checkout/"/>
+    <updated>2011-03-15T18:40:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/03/testing-magento-checkout</id>
+    <content type="html"><![CDATA[<p>While developing new functionality in Magento one of the key elements that you must ensure continues to work as expected is the checkout. After all an commerce website that can not trade is rather worthless.</p>
+
+<p>Using <a title="Mage-Test" href="http://github.com/alistairstead/Mage-Test">Mage-Test</a> you can easily create integration tests for the checkout process. This will allow you to ensure that your store still functions correctly after you have made any modifications.</p>
+
+<h2>Automated Integration Test</h2>
+
+<p>The example test method below is run within a Mage-Test controller test case.</p>
+
+<p>``` php
+&lt;?php
+/<em>*
+ * @author Alistair Stead
+ * @test
+ </em>/
+public function magentoCheckoutIntegrationTest()
+{</p>
+
+<pre><code>// Add the product to the basket
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'product' =&gt; '16',
+            'related_product' =&gt; '',
+            'qty' =&gt; '1'
+        )
+    );
+// Set an initial cookie so that the Magento cookie validation passes
+$this-&gt;request-&gt;setCookie('mage-test', true);
+$this-&gt;dispatch('/checkout/cart/add/');
+$this-&gt;assertResponseCode('302', '/checkout/cart/add/ has not redirected to the cart');
+$this-&gt;assertRedirectRegex("/^.*checkout.*$/", 'We are not directed to the checkout as expected');
+$this-&gt;reset();
+
+// Set the checkout as guest
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'method' =&gt; 'guest'
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveMethod/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveMethod/ has not responded as expected');
+$this-&gt;reset();
+
+// Save billing address
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'billing' =&gt; array(
+                'address_id' =&gt; '',
+                'firstname' =&gt; 'Authorize',
+                'lastname' =&gt; 'Capture',
+                'company' =&gt; '',
+                'email' =&gt; 'user@mage-test.co.uk',
+                'street' =&gt; array('Flat 14b', 'Baker Street'),
+                'city' =&gt; 'London',
+                'region_id' =&gt; '',
+                'postcode' =&gt; 'W1B OW3',
+                'country_id' =&gt; 'GB',
+                'telephone' =&gt; '+44 1234 123456',
+                'fax' =&gt; '+44 1234 123456',
+                'customer_password' =&gt; '',
+                'confirm_password' =&gt; '',
+                'save_in_address_book' =&gt; '1',
+                'use_for_shipping' =&gt; '1'
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveBilling/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveBilling/ has not responded as expected');
+$this-&gt;reset();
+
+// Set shipping method
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'shipping_method' =&gt; 'flatrate_flatrate'
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveShippingMethod/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveShippingMethod/ has not responded as expected');
+$this-&gt;reset();
+
+// Save payment
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'payment' =&gt; array(
+                'method' =&gt; 'paypal_direct',
+                'cc_type' =&gt; 'SM',
+                'cc_number' =&gt; 'XXXXXXXXXXXXXXX',
+                'cc_exp_month' =&gt; '1',
+                'cc_exp_year' =&gt; (date('Y') + 6),
+                'cc_cid' =&gt; '444',
+                'cc_ss_issue' =&gt; '1',
+                'cc_ss_start_month' =&gt; '1',
+                'cc_ss_start_year' =&gt; (date('Y') - 2)
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/savePayment/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/savePayment/ has not responded as expected');
+$this-&gt;reset();
+
+// Save order
+$this-&gt;request-&gt;setMethod('POST')
+    -&gt;setPost(
+        array(
+            'payment' =&gt; array(
+                'method' =&gt; 'paypal_direct',
+                'cc_type' =&gt; 'SM',
+                'cc_number' =&gt; 'XXXXXXXXXXXXXXX',
+                'cc_exp_month' =&gt; '1',
+                'cc_exp_year' =&gt; (date('Y') + 6),
+                'cc_cid' =&gt; '444',
+                'cc_ss_issue' =&gt; '1',
+                'cc_ss_start_month' =&gt; '1',
+                'cc_ss_start_year' =&gt; (date('Y') - 2)
+            )
+        )
+    );
+$this-&gt;dispatch('/checkout/onepage/saveOrder/');
+$this-&gt;assertResponseCode('200', '/checkout/onepage/saveOrder/ has not responded as expected');
+// Decode the JSON response so that we can evaluate the success
+$data = json_decode($this-&gt;response-&gt;getBody());
+$this-&gt;assertTrue(
+    $data-&gt;success,
+    "Unexpected status expected result :: {$data-&gt;error_messages}"
+);
+</code></pre>
+
+<p>}
+?>
+```</p>
+
+<p>You can use a <a title="PHPUnit" href="https://github.com/sebastianbergmann/phpunit/">PHPUnit</a> data provider to supply a set of data fixtures to be used for credit card numbers, address information and other values. Using a data provider you can test for not only the successful checkout but also the error handling within the checkout process.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[MageTool Update v0.3.0]]></title>
+    <link href="http://alistairstead.github.com/2011/02/magetool-update-v0-3-0/"/>
+    <updated>2011-02-09T14:27:00+00:00</updated>
+    <id>http://alistairstead.github.com/2011/02/magetool-update-v0-3-0</id>
+    <content type="html"><![CDATA[<p>While at Magento Imagine I have used the time where I was awake due to jet lag to finish a couple of new features to <a title="MageTool" href="http://www.magetool.co.uk/" target="_blank">MageTool</a>.</p>
+
+<p>MageTool v0.3.0 now includes:</p>
+
+<ul>
+<li>Improved feedback when running commands for mage-core-resource</li>
+<li>Added commands to query and run the Magento indexer</li>
+<li>Added commands to query and run the Magento compiler</li>
+<li>Improved mage-core-cache commands</li>
+<li>Added functionality to run individual module setup classes directly</li>
+<li>Added functionality to dispatch Magento events to test your observers</li>
+</ul>
+
+
+<p>All of these commands are intended to make development of Magento extensions easier and more streamlined. If you have feature requests please let me know. Or if you wish feel free to fork the <a title="MageTool on Github" href="https://github.com/alistairstead/MageTool">project on GitHub</a> and add the command that you need.</p>
+
+<p>If you find and bugs with MageTool please raise a ticket on <a title="MageTool bug tracker" href="https://github.com/alistairstead/MageTool/issues">GitHub</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Magento command line tools MageTool]]></title>
+    <link href="http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool/"/>
+    <updated>2010-10-10T00:05:00+01:00</updated>
+    <id>http://alistairstead.github.com/2010/10/magento-command-line-tools-magetool</id>
+    <content type="html"><![CDATA[<p>If you have spent any time developing with Magento I expect that like me you have found a number of tasks you find yourself repeating many many times. While developing new modules or themes there are many times when you need to clear the Magento cache or even disable it completely. Now of course you can log into the admin system and carry out these actions but have you every thought there must be an easier way?</p>
+
+<p>Many development frameworks or other open source projects have tool that can be used by developers to issue commands quickly and easily. Magento however does not have any built in tools to improve the development workflow. This is where MageTool fits in!</p>
+
+<h2>MageTool</h2>
+
+<p>How can <a href="http://github.com/alistairstead/MageTool">MageTool</a> help? Well hopefully in a number of ways. MageTool extends the existing Zend Framework command line tool zf, adding new commands that are specific to Magento development workflow. Rather then navigating the Magento admin system to clear cache or the enable or disable caching you can issue a simple command in your terminal window and achieve the same results. You can also modify the Magento configuration quickly or issue commands that will selectively update many configuration values.</p>
+
+<p>In my standard development practices I maintain a number of Magento installs on different servers. These are used for Development, Staging and UAT each using different domains to access the stores. This means however that I often need to move databases between servers, resulting in the ‘base_url’ configuration being incorrect. This can be easily updated if you have database access and is fairly simple if you only have a couple of sites setup. However if you have more sites setup this can become very very difficult to maintain and calls into question the idea of working with many environment servers during development.</p>
+
+<p>MageTool can help again in any situation where you need to move a Magento install and then update the ‘base_url’ configuration. You can construct a command that will quickly and easily update all URLs in the Magento config.</p>
+
+<!--more-->
+
+
+<h2>Install</h2>
+
+<p>First install ZF:</p>
+
+<p><code>sh
+$ sudo pear channel-discover pear.zfcampus.org
+$ sudo pear install zfcampus/zf
+</code></p>
+
+<p>Then install MageTool:</p>
+
+<p><code>sh
+$ sudo pear channel-discover pear.magetool.co.uk
+$ sudo pear install magetool/magetool
+</code></p>
+
+<p>Once you have installed ZF and MageTool you will need to create configuration for your user by creating the following file:</p>
+
+<p><code>sh
+$ vim ~/.zf.ini
+</code></p>
+
+<p>Add the following lines to load the additional MageTool commands making them available to zf:</p>
+
+<p><code>ini
+basicloader.classes.1 = "MageTool_Tool_MageApp_Provider_Manifest"
+basicloader.classes.2 = "MageTool_Tool_MageExtension_Provider_Manifest"
+</code></p>
+
+<p>After the install has completed successfully if you run zf you will see the additional commands available for Magento.</p>
+
+<p>``` sh
+  MageAdminUser</p>
+
+<pre><code>zf show mage-admin-user
+zf create mage-admin-user username email password firstname[=Admin] lastname[=User]
+</code></pre>
+
+<p>  MageCoreCache</p>
+
+<pre><code>zf clear mage-core-cache
+zf enable mage-core-cache
+zf disable mage-core-cache
+</code></pre>
+
+<p>  MageCoreResource</p>
+
+<pre><code>zf show mage-core-resource
+zf delete mage-core-resource path
+</code></pre>
+
+<p>  MageCoreConfig</p>
+
+<pre><code>zf show mage-core-config path scope
+zf set mage-core-config path scope value
+zf replace mage-core-config match value path scope
+</code></pre>
+
+<p>  MageApp</p>
+
+<pre><code>zf version mage-app
+</code></pre>
+
+<p>  MageExtension</p>
+
+<pre><code>zf create mage-extension code-pool vendor-name extension-name
+</code></pre>
+
+<p>```</p>
+
+<h2>Example Usage</h2>
+
+<h3>Cache</h3>
+
+<p>To clear the entire Magento cache simply run the following command from within the Magento project root directory:</p>
+
+<p><code>sh
+$ zf clear mage-core-cache
+</code></p>
+
+<p>To disable the entire Magento cache:</p>
+
+<p><code>sh
+$ zf disable mage-core-cache
+</code></p>
+
+<h3>Core Config</h3>
+
+<p>MageTool provides commands to show existing configuration values and to set their values. It also has an additional command that can be used to perform a str_replace on the config values. This can be used if you have moved the database from another server with a different domain to update the config values in a single command:</p>
+
+<p><code>sh
+$ zf replace mage-core-config --match www.current-domain.com --value shop.new-domain.co.uk
+</code></p>
+
+<p>This will update all the config value that include the string “www.current-domain.com” and substitute it for “shop.new-domain.co.uk”. This can also be further refined to only affect specific config paths or scopes.</p>
+
+<h3>Core Resource</h3>
+
+<p>During the development of a new extension you sometimes need to remove the resource from the internal registry to force it to re-run the install scripts. MageTool can help you first see which versions of each extensions are installed:</p>
+
+<p><code>sh
+$ zf show mage-core-resource --code mage_log
+</code></p>
+
+<p>You can also remove specific entries:</p>
+
+<p><code>sh
+$ zf delete mage-core-resource --code mage_log
+</code></p>
+
+<h3>Admin User</h3>
+
+<p>If you inherit a Magento project you may need to create a new admin user to gain access to the system. MageTool can list existing admin users and email addresses or it can create a new user for you to use.</p>
+
+<p><code>sh
+$ zf create mage-admin-user --username newadmin --email newadmin@project.com --password newpassword
+</code></p>
+
+<h2>Roadmap</h2>
+
+<p>I plan to add additional functionality to create skeleton files for new extensions or themes, removing the repetitive creation of directories and configuration files when creating new extension.</p>
+
+<p>If you have additional suggestions please let me know or alternatively you can fork the <a href="http://github.com/alistairstead/MageTool">MageTool</a> project on github and add the commands before sending me a pull request.</p>
+
+<h2>Feedback and Bugs</h2>
+
+<p>If you have any problems using MageTool or if you have any feedback or suggestions please <a href="http://github.com/alistairstead/MageTool/issues">submit them here</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Symfony APC Cache and Memcache Session Storage]]></title>
+    <link href="http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage/"/>
+    <updated>2009-11-30T23:22:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage</id>
+    <content type="html"><![CDATA[<p><img src="/images/posts/symfony-memcache.jpg" title="'symfony memcache'" ></p>
+
+<p>In a previous post I described some of the reasons why you would want to store your session data in an alternate location to temporary files on your server. I explained the<a title="symfony Doctrine database session storage" href="http://alistairstead.github.com/2009/11/symfony-doctri…ession-storage/"> setup of database session storage using Doctrine</a> and how this would allow you to take advantage of storing session data in a database. However depending upon your application requirements storing your session data in a database may cause excessive load on you database. You could of course use a separate dedicated database server to store your session data. However there is an alternate setup that will allow you to centralise your session storage ready for horizontal scaling of your hosting e.g. adding additional web servers.</p>
+
+<!--more-->
+
+
+<p>symfony provides a very easy way for you to configure your application to use a number of alternate session storage strategies. In this article I will explain the steps needed to setup your application to use first APC as your session storage and then Memcache. Both of these strategies result in the session data being stored in volatile memory on your server and a cookie is stored on the client to maintain reference to the session data. You can set the lifetime of the cookie to control your session timeout.</p>
+
+<h2>Install APC and Memcached modules</h2>
+
+<p>First we need to ensure that your server has the required packages installed. I am using Ubuntu 9.04 in this example but the packages are available for your preferred linux distro. To install the required packages run the following commands.</p>
+
+<p>Install the required PHP modules and the correct version of apache to successfully install APC, then install the Pecl APC module.</p>
+
+<p><code>sh
+$ sudo apt-get install php5-dev php-pear apache2-threaded-dev
+$ sudo pecl install apc
+</code></p>
+
+<p>Install memcache</p>
+
+<p><code>sh
+$ sudo apt-get install memcached
+</code></p>
+
+<h2>Configure APC session storage</h2>
+
+<p>Once you have your server setup with the required packages you need to configure symfony to use your preferred session storage strategy. To do this you simply need to modify the factories.yml file for you application. You need to modify the section of the factories.yml that defines your application storage strategy e.g.</p>
+
+<p>Amend your factories.yml to include the following settings then change the parameters to reflect you setup such as the domain and session name.</p>
+
+<p>``` yml
+all:
+  storage:</p>
+
+<pre><code>class: sfCacheSessionStorage
+param:
+  session_name: sfproject #[required] name of session to use
+  session_cookie_path: / #[required] cookie path
+  session_cookie_domain: example.com #[required] cookie domain
+  session_cookie_lifetime: +30 days #[required] liftime of cookie
+  session_cookie_secure: false #[required] send only if secure connection
+  session_cookie_http_only: true #[required] accessible only via http protocol
+  cache:
+    class: sfAPCCache #[required] define the cache strategy
+    param: ~ #[required] this empty key is required or you will get warnings
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have made this change clear the symfony cache and try your application. You will not see any noticeable difference unless you check the symfony toolbar and look for the additional cookie stored on the client.</p>
+
+<p>This example defines the use of sfAPCCache as the session storage strategy. APC stores the session data in memory on your web server making it quicker to access than reading a file or database record.</p>
+
+<h2>Configure Memcache session storage</h2>
+
+<p>To setup memcache session storage it is almost as simple. Amend your factories.yml to include the following settings then change the parameters to reflect your setup including any specific values for your memcache server if you set it up differently.</p>
+
+<p>``` yml
+all:
+  storage:</p>
+
+<pre><code>class: sfCacheSessionStorage
+param:
+  session_name: sfproject #[required] name of session to use
+  session_cookie_path: / #[required] cookie path
+  session_cookie_domain: example.com #[required] cookie domain
+  session_cookie_lifetime: +30 days #[required] liftime of cookie
+  session_cookie_secure: false #[required] send only if secure connection
+  session_cookie_http_only: true #[required] accessible only via http protocol
+  cache:
+    class: sfMemcacheCache #[required] define the cache strategy
+    param:
+      servers: # Array of servers
+        localserver:
+          host: localhost # hostname or IP of mamcache server
+          port: 11211 # default memcache port
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have made this change clear your symfony cache and test your application.</p>
+
+<p>Memcache is a volatile storage strategy very similar to RAM in you PC or Mac. It is very quick to access as the session data is held in the server memory rather than in a file or database. Memcache can also be centralised onto a dedicated memcache server allowing your application to be scaled. The example above uses localhost as the memcache server but the host value of the configured server could be modified to be an alternate dedicated memcache server.</p>
+
+<p>I will be running some performance tests using these strategies and also compare the default file based session storage and also the database session storage strategy. If you have already run these tests I would be keen to see your results.</p>
+
+<p>I hope these examples prove useful. If you have any queries or questions please leave a comment.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Symfony Doctrine Database Session Storage]]></title>
+    <link href="http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage/"/>
+    <updated>2009-11-30T22:23:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage</id>
+    <content type="html"><![CDATA[<p>Sessions are normally managed by your server and depending upon how involved you get with the PHP setup you need never know how this data is stored. The default setup for PHP is to store session data in temporary files on the server. So why would we want to change how sessions are handled and what advantage can we gain from any changes we make.</p>
+
+<h2>Why use database session management?</h2>
+
+<p>Sessions allow you maintain persistence within PHP applications. With every HTTP request a PHP application must re-assign every variable and object needed in your application. Sessions allow you to store data that is required to persist past each HTTP request allowing it to be easily retrieved and used.</p>
+
+<!--more-->
+
+
+<p>Sessions are commonly used when creating a secure application, used to store the state of a user e.g. if they are logged in or credentials to control access to content.</p>
+
+<p>By storing session data in a database table you are able to create an application interface that will show information about the users that are logged in. This for example could show the number of users logged into the application or show administrators who is logged in.</p>
+
+<p>If you need to scale your application by adding more than one server, saving your session data in temporary files can lead to major problems. By using database storage you can optimise and unify the session storage, ensuring that session data is always available and consistent.</p>
+
+<p>Obviously there are other solutions for scalable session storage such as APC or MemCache but these solutions are for another post.</p>
+
+<h2>How to setup Doctrine database session storage</h2>
+
+<p>You first need to add a table to you database schema that will be used to store your session data. Although you can create this table manually, adding it to your scheme also created the model classes that you can later use to interact with the table data.</p>
+
+<p>``` yml
+Session:
+  columns:</p>
+
+<pre><code>id: { type: string(32), primary: true, notnull: true }
+data: { type: string(4000), notnull: true }
+time: { type: integer(4), notnull: true }
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have added the table to your schema you can build your model and database:</p>
+
+<p><code>sh
+$ symfony doctrine:build-all
+</code></p>
+
+<p>You then need to configure your symfony application to use this table to store all session data. To do this you need to modify the factories.yml file for your application. Update your file to include the following lines:</p>
+
+<p>``` yml
+all:
+  storage:</p>
+
+<pre><code>class: sfPDOSessionStorage
+param:
+  db_table: session # Name of the table storing the sessions
+  db_id_col: id # The primary key column
+  db_data_col: data # The column where the session data will be stored
+  db_time_col: time # The column where the timestamp of the session will be stored
+  database: doctrine # Name of the database connection to use
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have modifies your factories.yml file you will need to clear the symfony cache. After that your application should run exactly as it did before except that your users session data will be stored in the database table.</p>
+
+<p>The data column stores all the session data in a serialised form this is deserialized each time a user requests the data. There are many uses for this type of session storage and I hope this brief explanation helps you.</p>
+]]></content>
+  </entry>
+  
+</feed>

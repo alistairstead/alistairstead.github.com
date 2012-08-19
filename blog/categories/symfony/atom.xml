@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Symfony | Design Disclosure - Portfolio & Personal Blog of Alistair Stead]]></title>
+  <link href="http://alistairstead.github.com/blog/categories/symfony/atom.xml" rel="self"/>
+  <link href="http://alistairstead.github.com/"/>
+  <updated>2012-08-19T22:21:38+01:00</updated>
+  <id>http://alistairstead.github.com/</id>
+  <author>
+    <name><![CDATA[Alistair Stead]]></name>
+    <email><![CDATA[alistair.stead@designdisclosure.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Symfony APC Cache and Memcache Session Storage]]></title>
+    <link href="http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage/"/>
+    <updated>2009-11-30T23:22:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/symfony-apc-cache-and-memcache-session-storage</id>
+    <content type="html"><![CDATA[<p><img src="/images/posts/symfony-memcache.jpg" title="'symfony memcache'" ></p>
+
+<p>In a previous post I described some of the reasons why you would want to store your session data in an alternate location to temporary files on your server. I explained the<a title="symfony Doctrine database session storage" href="http://alistairstead.github.com/2009/11/symfony-doctri…ession-storage/"> setup of database session storage using Doctrine</a> and how this would allow you to take advantage of storing session data in a database. However depending upon your application requirements storing your session data in a database may cause excessive load on you database. You could of course use a separate dedicated database server to store your session data. However there is an alternate setup that will allow you to centralise your session storage ready for horizontal scaling of your hosting e.g. adding additional web servers.</p>
+
+<!--more-->
+
+
+<p>symfony provides a very easy way for you to configure your application to use a number of alternate session storage strategies. In this article I will explain the steps needed to setup your application to use first APC as your session storage and then Memcache. Both of these strategies result in the session data being stored in volatile memory on your server and a cookie is stored on the client to maintain reference to the session data. You can set the lifetime of the cookie to control your session timeout.</p>
+
+<h2>Install APC and Memcached modules</h2>
+
+<p>First we need to ensure that your server has the required packages installed. I am using Ubuntu 9.04 in this example but the packages are available for your preferred linux distro. To install the required packages run the following commands.</p>
+
+<p>Install the required PHP modules and the correct version of apache to successfully install APC, then install the Pecl APC module.</p>
+
+<p><code>sh
+$ sudo apt-get install php5-dev php-pear apache2-threaded-dev
+$ sudo pecl install apc
+</code></p>
+
+<p>Install memcache</p>
+
+<p><code>sh
+$ sudo apt-get install memcached
+</code></p>
+
+<h2>Configure APC session storage</h2>
+
+<p>Once you have your server setup with the required packages you need to configure symfony to use your preferred session storage strategy. To do this you simply need to modify the factories.yml file for you application. You need to modify the section of the factories.yml that defines your application storage strategy e.g.</p>
+
+<p>Amend your factories.yml to include the following settings then change the parameters to reflect you setup such as the domain and session name.</p>
+
+<p>``` yml
+all:
+  storage:</p>
+
+<pre><code>class: sfCacheSessionStorage
+param:
+  session_name: sfproject #[required] name of session to use
+  session_cookie_path: / #[required] cookie path
+  session_cookie_domain: example.com #[required] cookie domain
+  session_cookie_lifetime: +30 days #[required] liftime of cookie
+  session_cookie_secure: false #[required] send only if secure connection
+  session_cookie_http_only: true #[required] accessible only via http protocol
+  cache:
+    class: sfAPCCache #[required] define the cache strategy
+    param: ~ #[required] this empty key is required or you will get warnings
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have made this change clear the symfony cache and try your application. You will not see any noticeable difference unless you check the symfony toolbar and look for the additional cookie stored on the client.</p>
+
+<p>This example defines the use of sfAPCCache as the session storage strategy. APC stores the session data in memory on your web server making it quicker to access than reading a file or database record.</p>
+
+<h2>Configure Memcache session storage</h2>
+
+<p>To setup memcache session storage it is almost as simple. Amend your factories.yml to include the following settings then change the parameters to reflect your setup including any specific values for your memcache server if you set it up differently.</p>
+
+<p>``` yml
+all:
+  storage:</p>
+
+<pre><code>class: sfCacheSessionStorage
+param:
+  session_name: sfproject #[required] name of session to use
+  session_cookie_path: / #[required] cookie path
+  session_cookie_domain: example.com #[required] cookie domain
+  session_cookie_lifetime: +30 days #[required] liftime of cookie
+  session_cookie_secure: false #[required] send only if secure connection
+  session_cookie_http_only: true #[required] accessible only via http protocol
+  cache:
+    class: sfMemcacheCache #[required] define the cache strategy
+    param:
+      servers: # Array of servers
+        localserver:
+          host: localhost # hostname or IP of mamcache server
+          port: 11211 # default memcache port
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have made this change clear your symfony cache and test your application.</p>
+
+<p>Memcache is a volatile storage strategy very similar to RAM in you PC or Mac. It is very quick to access as the session data is held in the server memory rather than in a file or database. Memcache can also be centralised onto a dedicated memcache server allowing your application to be scaled. The example above uses localhost as the memcache server but the host value of the configured server could be modified to be an alternate dedicated memcache server.</p>
+
+<p>I will be running some performance tests using these strategies and also compare the default file based session storage and also the database session storage strategy. If you have already run these tests I would be keen to see your results.</p>
+
+<p>I hope these examples prove useful. If you have any queries or questions please leave a comment.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Symfony Doctrine Database Session Storage]]></title>
+    <link href="http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage/"/>
+    <updated>2009-11-30T22:23:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/symfony-doctrine-database-session-storage</id>
+    <content type="html"><![CDATA[<p>Sessions are normally managed by your server and depending upon how involved you get with the PHP setup you need never know how this data is stored. The default setup for PHP is to store session data in temporary files on the server. So why would we want to change how sessions are handled and what advantage can we gain from any changes we make.</p>
+
+<h2>Why use database session management?</h2>
+
+<p>Sessions allow you maintain persistence within PHP applications. With every HTTP request a PHP application must re-assign every variable and object needed in your application. Sessions allow you to store data that is required to persist past each HTTP request allowing it to be easily retrieved and used.</p>
+
+<!--more-->
+
+
+<p>Sessions are commonly used when creating a secure application, used to store the state of a user e.g. if they are logged in or credentials to control access to content.</p>
+
+<p>By storing session data in a database table you are able to create an application interface that will show information about the users that are logged in. This for example could show the number of users logged into the application or show administrators who is logged in.</p>
+
+<p>If you need to scale your application by adding more than one server, saving your session data in temporary files can lead to major problems. By using database storage you can optimise and unify the session storage, ensuring that session data is always available and consistent.</p>
+
+<p>Obviously there are other solutions for scalable session storage such as APC or MemCache but these solutions are for another post.</p>
+
+<h2>How to setup Doctrine database session storage</h2>
+
+<p>You first need to add a table to you database schema that will be used to store your session data. Although you can create this table manually, adding it to your scheme also created the model classes that you can later use to interact with the table data.</p>
+
+<p>``` yml
+Session:
+  columns:</p>
+
+<pre><code>id: { type: string(32), primary: true, notnull: true }
+data: { type: string(4000), notnull: true }
+time: { type: integer(4), notnull: true }
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have added the table to your schema you can build your model and database:</p>
+
+<p><code>sh
+$ symfony doctrine:build-all
+</code></p>
+
+<p>You then need to configure your symfony application to use this table to store all session data. To do this you need to modify the factories.yml file for your application. Update your file to include the following lines:</p>
+
+<p>``` yml
+all:
+  storage:</p>
+
+<pre><code>class: sfPDOSessionStorage
+param:
+  db_table: session # Name of the table storing the sessions
+  db_id_col: id # The primary key column
+  db_data_col: data # The column where the session data will be stored
+  db_time_col: time # The column where the timestamp of the session will be stored
+  database: doctrine # Name of the database connection to use
+</code></pre>
+
+<p>```</p>
+
+<p>Once you have modifies your factories.yml file you will need to clear the symfony cache. After that your application should run exactly as it did before except that your users session data will be stored in the database table.</p>
+
+<p>The data column stores all the session data in a serialised form this is deserialized each time a user requests the data. There are many uses for this type of session storage and I hope this brief explanation helps you.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Propel doUpdate update multiple records in a single statement]]></title>
+    <link href="http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/"/>
+    <updated>2009-10-08T20:59:00+01:00</updated>
+    <id>http://alistairstead.github.com/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement</id>
+    <content type="html"><![CDATA[<p>I've been very busy with a number of project launches lately. While working on a little problem today I re-discovered a little gem for use with Propel to update multiple rows in a single statement, rather than iterating through a collection updating and saving each object in turn.</p>
+
+<p>This task is simple in SQL but after a while using any abstraction layer you may find like me you forget about the simple solutions as you spend you day working with complex objects and trying to hydrate custom objects. Blah blah blah...</p>
+
+<p>The complex solution to a simple problem:</p>
+
+<p><code>php
+&lt;?php
+// Obtain the connection configured
+$conn = Propel::getConnection(YourObjectPeer::DATABASE_NAME);
+// Create a Criteria object that will select the correct rows from the database
+$selectCriteria = new Criteria();
+$selectCriteria-&gt;add(YourObjectPeer::COLUMB_TO_SELECT, 'value_to_match');
+// Create a Criteria object includes the value you want to set
+$updateCriteria = new Criteria();
+$updateCriteria-&gt;add(YourObjectPeer::COLUMB_TO_CHANGE, 'value_to_be_set');
+// Execute the query
+BasePeer::doUpdate($selectCriteria, $updateCriteria, $conn);
+?&gt;
+</code></p>
+
+<p>Thats it! I hope it helps...</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[sfPokaYokePlugin symfony Client Side Validation]]></title>
+    <link href="http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation/"/>
+    <updated>2009-01-14T22:34:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation</id>
+    <content type="html"><![CDATA[<p>The <code>sfPokaYokePlugin</code> (pronounced with the 'e' on the end e.g. poka-yoki).  Simply put it is the use of simple mechanisms that stop mistakes being made.   sfPokaYoke provides client-side form validation based on existing <code>action.yml</code> validation files.  This validator will provide fully configurable inline errors on blur events and listed errors once the form is submitted.</p>
+
+<p>This plugin was built after reading "Designing the Obvious" by Robert Hoekman, jr. and working with a number of unsatisfactory  validation libraries. It is intended that this plugin will allow you to configure the validation and feedback to make your forms poka yoke devices i.e. impossible for users to make any errors while entering data.</p>
+
+<p>Thanks to Alon Noy for a starting point for the validators! The following symfony validators have been ported to JavaScript implemented in the plugin:</p>
+
+<ul>
+<li>sfStringValidator</li>
+<li>sfNumberValidator</li>
+<li>sfRegexValidator</li>
+<li>sfEmailValidator</li>
+<li>sfCompareValidator</li>
+</ul>
+
+
+<p>I also plan to implement a client side callback validator that will allow you to call your own client side validators or even call ajax function to run server side validation in real time.</p>
+
+<!--more-->
+
+
+<h2>Installation</h2>
+
+<p>To install the plugin you can either download the latest files from the symfony wiki or you can checkout the SVN version.</p>
+
+<h3>Install the plugin</h3>
+
+<p><code>sh
+$ symfony plugin-install http://plugins.symfony-project.com/sfPokaYokePlugin
+</code></p>
+
+<h3>Add the sfPokaYoke filter to your app filters.yml</h3>
+
+<p>``` yml filters.yml
+rendering: ~
+web_debug: ~
+security: ~</p>
+
+<h1>generally, you will want to insert your own filters here</h1>
+
+<p>poka_yoke:
+class: sfPokaYokeFilter</p>
+
+<p>cache:     ~
+common:    ~
+flash:     ~
+execution: ~
+```</p>
+
+<h3>Clear you cache</h3>
+
+<p><code>sh
+$ symfony cc
+</code></p>
+
+<p>You're done. Any forms that have validation rules will have client-side rules applied too. sfPokaYoke looks for validation rules that match the action name the form will be submitted to. This will also now work with named routes.</p>
+
+<h2>Usage Example</h2>
+
+<p>Once any validation rules are applied to the actions for your form, rules will be created for the client-side validation.</p>
+
+<p>You can configure the client side validation to be triggered on the form submit or when the individual field loses focus. This is done by adding config values to your app.yml and will define how sfPokaYokePlugin responds to the users interaction</p>
+
+<p>If the input value fails any validation rules that error will be inserted next to the input.</p>
+
+<p><code>html
+&lt;?php echo form_error('name') ?&gt;
+</code></p>
+
+<p>You do not need to add any <code>&lt;div&gt;</code> tags to capture these in-line errors unless you have a specific location in you form markup where you wish the error to be displayed. sfPokaYoke will look for the symfony form error locations and use those <code>&lt;div&gt;</code> tags if available.</p>
+
+<p>If your template includes the following symfony form helper, sfPokaYoke will insert the errors into this location.</p>
+
+<p>On form submission a list of all error is inserted as the first child of the form. Each listed error item has an onclick event attached to allow the user to click on the error to focus the form field and resolve the problem.</p>
+
+<p>``` html</p>
+
+<ul id="pkykGlobalErrors">
+   <li class="globalErrorTitle">The following form information has been completed but it contains errors:</li>
+   <li class="errors" id="pkykGlobal_username">Please enter your username.</li>
+   <li class="errors" id="pkykGlobal_password">Please enter your password.</li>
+</ul>
+
+
+<p>```</p>
+
+<p>As each input error is corrected by the user the in-line and list errors are removed.</p>
+
+<h2>Example configuration</h2>
+
+<p>The code block below is an example app.yml file entry to configure the interactions of sfPokaYoke</p>
+
+<p>``` yml
+all:
+  # Example app.yml config for sfPokaYoke
+  pokayoke:</p>
+
+<pre><code># Turn PokaYoke on and off
+on: true
+# Turn on the debuging this will cause alerts at each validation action
+debug: false
+# Event hooks - validation called on both field blur and form submit
+validate_onblur: true
+validateon_submit: true
+
+# Define which events should display the inline and global form errors
+display_inline_onblur: true
+display_inline_onsubmit: false
+display_global_onblur: false
+display_global_onsubmit: false
+
+# Inline error id="error_for(_name)" and class="form_error"
+inline_id_prefix: error_for_
+inline_class: form_error
+
+# &amp;lt;li class="form_error"&amp;gt;&amp;lt;/li&amp;gt; the global error lost class
+global_class: form_error
+# The text used to introduce the global errors list
+global_title: 'The following form information has been completed but it contains errors:'
+global_titleclass: pkyk_global_title
+
+# Add an onClick event to the items in the global list - click to focus the field with the error
+global_onclick_focus: true;
+</code></pre>
+
+<p>```</p>
+]]></content>
+  </entry>
+  
+</feed>

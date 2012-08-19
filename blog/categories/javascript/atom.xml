@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: JavaScript | Design Disclosure - Portfolio & Personal Blog of Alistair Stead]]></title>
+  <link href="http://alistairstead.github.com/blog/categories/javascript/atom.xml" rel="self"/>
+  <link href="http://alistairstead.github.com/"/>
+  <updated>2012-08-19T22:21:38+01:00</updated>
+  <id>http://alistairstead.github.com/</id>
+  <author>
+    <name><![CDATA[Alistair Stead]]></name>
+    <email><![CDATA[alistair.stead@designdisclosure.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[YUI Connect asynchronous file uploads]]></title>
+    <link href="http://alistairstead.github.com/2009/11/yui-connect-asynchronous-file-uploads/"/>
+    <updated>2009-11-23T14:26:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/11/yui-connect-asynchronous-file-uploads</id>
+    <content type="html"><![CDATA[<p>I'm sure the problems with multi-part data that I have been working through this morning is very simple but there are a number of forum posts about this, so I will share my findings. When using YUI Connection Manager in conjunction with multi-part form data I have experienced problems creating the asynchronous request and canceling the form submission. Even after setting up the request and callback object and checking the YUI API repeatedly the problem resides elsewhere.</p>
+
+<p>``` js
+YAHOO.util.Event.addListener(forms, 'submit', this.<em>onFormSubmit, this);
+</em>onFormSubmit: function(e, o) {</p>
+
+<pre><code>YAHOO&gt;util.Event.preventDefault(e);
+// Set the form  YAHOO.util.Connect.setForm(e.currentTarget);
+// Configure the callback object
+callBackObj = {
+    success: o._loadRemoteFormSubmissionTemplateComplete,
+    failure: o._loadRemoteFormSubmissionTemplateFailed, 
+    argument: {
+        objType: objType,
+        region: regionObj,
+        mode: submitbutton.value
+    }
+}
+// Make the request
+YAHOO.util.Connect.asyncRequest('POST', e.currentTarget.action, callBackObj);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>With non multi-part forms you can hijack the submit event of the form and create an asynchronous request. However once you try with multi-part data no matter how you set this up and attempt to cancel the form submit action the form will still make an HTTP request in the main window.</p>
+
+<h2>The YUI Multi-Part Data Solution</h2>
+
+<p>The solution is very simple once you find it but it is easy to overlook! In order to use YUI connect to create an asynchronous request you must remove the 'submit' button and replace it with a 'button' then assign it an eventListener that will create the asyncRequest.</p>
+
+<p>``` js
+var alternateButton = document.getElementById('alternateButtonId')
+YAHOO.util.Event.addListener(alternateButton, 'click', this.<em>onFormSubmit, this);
+</em>onFormSubmit: function(e, o) {</p>
+
+<pre><code>YAHOO.util.Event.preventDefault(e);
+// Set the form
+YAHOO.util.Connect.setForm(e.currentTarget);
+// Configure the callback object
+callBackObj = {
+    success: o._loadRemoteFormSubmissionTemplateComplete,
+    failure: o._loadRemoteFormSubmissionTemplateFailed,
+    argument: { 
+        objType: objType,
+        region: regionObj,
+        mode: submitbutton.value
+    }
+}
+// Make the request
+YAHOO.util.Connect.asyncRequest('POST', e.currentTarget.action, callBackObj);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>When trying to use multi-part data YUI Connection Manager will create an iframe in the document that your form will submit the data to. If you try and use the submit handler YUI currently does not change the target value of the submit event.</p>
+
+<p>The YUI examples do all show the use of alternate buttons rather than a standard submit button however it can be easily overlooked. I hope this helps someone!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[sfPokaYokePlugin symfony Client Side Validation]]></title>
+    <link href="http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation/"/>
+    <updated>2009-01-14T22:34:00+00:00</updated>
+    <id>http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation</id>
+    <content type="html"><![CDATA[<p>The <code>sfPokaYokePlugin</code> (pronounced with the 'e' on the end e.g. poka-yoki).  Simply put it is the use of simple mechanisms that stop mistakes being made.   sfPokaYoke provides client-side form validation based on existing <code>action.yml</code> validation files.  This validator will provide fully configurable inline errors on blur events and listed errors once the form is submitted.</p>
+
+<p>This plugin was built after reading "Designing the Obvious" by Robert Hoekman, jr. and working with a number of unsatisfactory  validation libraries. It is intended that this plugin will allow you to configure the validation and feedback to make your forms poka yoke devices i.e. impossible for users to make any errors while entering data.</p>
+
+<p>Thanks to Alon Noy for a starting point for the validators! The following symfony validators have been ported to JavaScript implemented in the plugin:</p>
+
+<ul>
+<li>sfStringValidator</li>
+<li>sfNumberValidator</li>
+<li>sfRegexValidator</li>
+<li>sfEmailValidator</li>
+<li>sfCompareValidator</li>
+</ul>
+
+
+<p>I also plan to implement a client side callback validator that will allow you to call your own client side validators or even call ajax function to run server side validation in real time.</p>
+
+<!--more-->
+
+
+<h2>Installation</h2>
+
+<p>To install the plugin you can either download the latest files from the symfony wiki or you can checkout the SVN version.</p>
+
+<h3>Install the plugin</h3>
+
+<p><code>sh
+$ symfony plugin-install http://plugins.symfony-project.com/sfPokaYokePlugin
+</code></p>
+
+<h3>Add the sfPokaYoke filter to your app filters.yml</h3>
+
+<p>``` yml filters.yml
+rendering: ~
+web_debug: ~
+security: ~</p>
+
+<h1>generally, you will want to insert your own filters here</h1>
+
+<p>poka_yoke:
+class: sfPokaYokeFilter</p>
+
+<p>cache:     ~
+common:    ~
+flash:     ~
+execution: ~
+```</p>
+
+<h3>Clear you cache</h3>
+
+<p><code>sh
+$ symfony cc
+</code></p>
+
+<p>You're done. Any forms that have validation rules will have client-side rules applied too. sfPokaYoke looks for validation rules that match the action name the form will be submitted to. This will also now work with named routes.</p>
+
+<h2>Usage Example</h2>
+
+<p>Once any validation rules are applied to the actions for your form, rules will be created for the client-side validation.</p>
+
+<p>You can configure the client side validation to be triggered on the form submit or when the individual field loses focus. This is done by adding config values to your app.yml and will define how sfPokaYokePlugin responds to the users interaction</p>
+
+<p>If the input value fails any validation rules that error will be inserted next to the input.</p>
+
+<p><code>html
+&lt;?php echo form_error('name') ?&gt;
+</code></p>
+
+<p>You do not need to add any <code>&lt;div&gt;</code> tags to capture these in-line errors unless you have a specific location in you form markup where you wish the error to be displayed. sfPokaYoke will look for the symfony form error locations and use those <code>&lt;div&gt;</code> tags if available.</p>
+
+<p>If your template includes the following symfony form helper, sfPokaYoke will insert the errors into this location.</p>
+
+<p>On form submission a list of all error is inserted as the first child of the form. Each listed error item has an onclick event attached to allow the user to click on the error to focus the form field and resolve the problem.</p>
+
+<p>``` html</p>
+
+<ul id="pkykGlobalErrors">
+   <li class="globalErrorTitle">The following form information has been completed but it contains errors:</li>
+   <li class="errors" id="pkykGlobal_username">Please enter your username.</li>
+   <li class="errors" id="pkykGlobal_password">Please enter your password.</li>
+</ul>
+
+
+<p>```</p>
+
+<p>As each input error is corrected by the user the in-line and list errors are removed.</p>
+
+<h2>Example configuration</h2>
+
+<p>The code block below is an example app.yml file entry to configure the interactions of sfPokaYoke</p>
+
+<p>``` yml
+all:
+  # Example app.yml config for sfPokaYoke
+  pokayoke:</p>
+
+<pre><code># Turn PokaYoke on and off
+on: true
+# Turn on the debuging this will cause alerts at each validation action
+debug: false
+# Event hooks - validation called on both field blur and form submit
+validate_onblur: true
+validateon_submit: true
+
+# Define which events should display the inline and global form errors
+display_inline_onblur: true
+display_inline_onsubmit: false
+display_global_onblur: false
+display_global_onsubmit: false
+
+# Inline error id="error_for(_name)" and class="form_error"
+inline_id_prefix: error_for_
+inline_class: form_error
+
+# &amp;lt;li class="form_error"&amp;gt;&amp;lt;/li&amp;gt; the global error lost class
+global_class: form_error
+# The text used to introduce the global errors list
+global_title: 'The following form information has been completed but it contains errors:'
+global_titleclass: pkyk_global_title
+
+# Add an onClick event to the items in the global list - click to focus the field with the error
+global_onclick_focus: true;
+</code></pre>
+
+<p>```</p>
+]]></content>
+  </entry>
+  
+</feed>

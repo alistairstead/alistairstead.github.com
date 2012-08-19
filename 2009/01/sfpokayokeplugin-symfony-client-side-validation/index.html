@@ -1,0 +1,484 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>sfPokaYokePlugin symfony Client Side Validation - Design Disclosure - Portfolio & Personal Blog of Alistair Stead</title>
+  <meta name="author" content="Alistair Stead">
+
+  
+  <meta name="description" content="The sfPokaYokePlugin (pronounced with the &#8216;e&#8217; on the end e.g. poka-yoki). Simply put it is the use of simple mechanisms that stop &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Design Disclosure - Portfolio & Personal Blog of Alistair Stead" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://coderwall.com/stylesheets/jquery.coderwall.css" media="all" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-287228-6']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/"><img src="/images/logo.png"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:alistairstead.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">sfPokaYokePlugin Symfony Client Side Validation</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-01-14T22:34:00+00:00" pubdate data-updated="true">Jan 14<span>th</span>, 2009</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>The <code>sfPokaYokePlugin</code> (pronounced with the &#8216;e&#8217; on the end e.g. poka-yoki).  Simply put it is the use of simple mechanisms that stop mistakes being made.   sfPokaYoke provides client-side form validation based on existing <code>action.yml</code> validation files.  This validator will provide fully configurable inline errors on blur events and listed errors once the form is submitted.</p>
+
+<p>This plugin was built after reading &#8220;Designing the Obvious&#8221; by Robert Hoekman, jr. and working with a number of unsatisfactory  validation libraries. It is intended that this plugin will allow you to configure the validation and feedback to make your forms poka yoke devices i.e. impossible for users to make any errors while entering data.</p>
+
+<p>Thanks to Alon Noy for a starting point for the validators! The following symfony validators have been ported to JavaScript implemented in the plugin:</p>
+
+<ul>
+<li>sfStringValidator</li>
+<li>sfNumberValidator</li>
+<li>sfRegexValidator</li>
+<li>sfEmailValidator</li>
+<li>sfCompareValidator</li>
+</ul>
+
+
+<p>I also plan to implement a client side callback validator that will allow you to call your own client side validators or even call ajax function to run server side validation in real time.</p>
+
+<!--more-->
+
+
+<h2>Installation</h2>
+
+<p>To install the plugin you can either download the latest files from the symfony wiki or you can checkout the SVN version.</p>
+
+<h3>Install the plugin</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>symfony plugin-install http://plugins.symfony-project.com/sfPokaYokePlugin
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Add the sfPokaYoke filter to your app filters.yml</h3>
+
+<figure class='code'><figcaption><span>filters.yml</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">rendering</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">web_debug</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">security</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># generally, you will want to insert your own filters here</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">poka_yoke</span><span class="p-Indicator">:</span>
+</span><span class='line'><span class="l-Scalar-Plain">class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">sfPokaYokeFilter</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">cache</span><span class="p-Indicator">:</span>     <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">common</span><span class="p-Indicator">:</span>    <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">flash</span><span class="p-Indicator">:</span>     <span class="l-Scalar-Plain">~</span>
+</span><span class='line'><span class="l-Scalar-Plain">execution</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">~</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Clear you cache</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>symfony cc
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You&#8217;re done. Any forms that have validation rules will have client-side rules applied too. sfPokaYoke looks for validation rules that match the action name the form will be submitted to. This will also now work with named routes.</p>
+
+<h2>Usage Example</h2>
+
+<p>Once any validation rules are applied to the actions for your form, rules will be created for the client-side validation.</p>
+
+<p>You can configure the client side validation to be triggered on the form submit or when the individual field loses focus. This is done by adding config values to your app.yml and will define how sfPokaYokePlugin responds to the users interaction</p>
+
+<p>If the input value fails any validation rules that error will be inserted next to the input.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="cp">&lt;?php echo form_error(&#39;name&#39;) ?&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You do not need to add any <code>&lt;div&gt;</code> tags to capture these in-line errors unless you have a specific location in you form markup where you wish the error to be displayed. sfPokaYoke will look for the symfony form error locations and use those <code>&lt;div&gt;</code> tags if available.</p>
+
+<p>If your template includes the following symfony form helper, sfPokaYoke will insert the errors into this location.</p>
+
+<p>On form submission a list of all error is inserted as the first child of the form. Each listed error item has an onclick event attached to allow the user to click on the error to focus the form field and resolve the problem.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;ul</span> <span class="na">id=</span><span class="s">&quot;pkykGlobalErrors&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;globalErrorTitle&quot;</span><span class="nt">&gt;</span>The following form information has been completed but it contains errors:<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;errors&quot;</span> <span class="na">id=</span><span class="s">&quot;pkykGlobal_username&quot;</span><span class="nt">&gt;</span>Please enter your username.<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;errors&quot;</span> <span class="na">id=</span><span class="s">&quot;pkykGlobal_password&quot;</span><span class="nt">&gt;</span>Please enter your password.<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As each input error is corrected by the user the in-line and list errors are removed.</p>
+
+<h2>Example configuration</h2>
+
+<p>The code block below is an example app.yml file entry to configure the interactions of sfPokaYoke</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">all</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="c1"># Example app.yml config for sfPokaYoke</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">pokayoke</span><span class="p-Indicator">:</span>
+</span><span class='line'>    <span class="c1"># Turn PokaYoke on and off</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">on</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>    <span class="c1"># Turn on the debuging this will cause alerts at each validation action</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">debug</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>    <span class="c1"># Event hooks - validation called on both field blur and form submit</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">validate_onblur</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">validateon_submit</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Define which events should display the inline and global form errors</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_inline_onblur</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_inline_onsubmit</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_global_onblur</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">display_global_onsubmit</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">false</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Inline error id=&quot;error_for(_name)&quot; and class=&quot;form_error&quot;</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">inline_id_prefix</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">error_for_</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">inline_class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">form_error</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># &amp;lt;li class=&quot;form_error&quot;&amp;gt;&amp;lt;/li&amp;gt; the global error lost class</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_class</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">form_error</span>
+</span><span class='line'>    <span class="c1"># The text used to introduce the global errors list</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_title</span><span class="p-Indicator">:</span> <span class="s">&#39;The</span><span class="nv"> </span><span class="s">following</span><span class="nv"> </span><span class="s">form</span><span class="nv"> </span><span class="s">information</span><span class="nv"> </span><span class="s">has</span><span class="nv"> </span><span class="s">been</span><span class="nv"> </span><span class="s">completed</span><span class="nv"> </span><span class="s">but</span><span class="nv"> </span><span class="s">it</span><span class="nv"> </span><span class="s">contains</span><span class="nv"> </span><span class="s">errors:&#39;</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_titleclass</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">pkyk_global_title</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add an onClick event to the items in the global list - click to focus the field with the error</span>
+</span><span class='line'>    <span class="l-Scalar-Plain">global_onclick_focus</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alistair Stead</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-01-14T22:34:00+00:00" pubdate data-updated="true">Jan 14<span>th</span>, 2009</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/javascript/'>JavaScript</a>, <a class='category' href='/blog/categories/symfony/'>Symfony</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation/" data-via="alistairstead" data-counturl="http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/2009/01/hello-world/" title="Previous Post: Hello world!">&laquo; Hello world!</a>
+      
+      
+        <a class="basic-alignment right" href="/2009/07/where-to-start-learning-cocoa-and-cappuccino/" title="next Post: Where to start learning Cocoa and Cappuccino?">Where to start learning Cocoa and Cappuccino? &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/2012/04/deploy-magento-with-capistrano/">Deploy Magento with Capistrano</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2012/02/updated-blog/">Updated Blog</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/package-and-install-your-latest-magento-1-5-extension/">Package and Install your latest Magento 1.5+ extension</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/03/testing-magento-checkout/">Testing Magento Checkout</a>
+      </li>
+    
+      <li class="post">
+        <a href="/2011/02/magetool-update-v0-3-0/">MageTool Update v0.3.0</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <a href="http://www.phpconference.nl" title="DPC (Dutch PHP Conference) 2012"><img src="/images/dpc_block_speaker.png"></a>
+</section>
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("alistairstead", 5, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/alistairstead" class="twitter-follow-button" data-show-count="true">Follow @alistairstead</a>
+  
+</section>
+
+
+<section>
+  <h1>On Delicious</h1>
+  <div id="delicious"></div>
+  <script type="text/javascript" src="http://feeds.delicious.com/v2/json/threethirdsfull?count=5&amp;sort=date&amp;callback=renderDeliciousLinks"></script>
+  <p><a href="http://delicious.com/threethirdsfull">My Delicious Bookmarks &raquo;</a></p>
+</section>
+
+
+
+
+<section>
+<h1>Flickr</h1>
+<ul id="flickr">
+    <li class="loading">Flickr updating...</li>
+</ul>
+<script lang="Javascript">
+var flickrNickname = "alistairstead";
+function jsonFlickrApi(rsp) {
+    if (rsp.stat != "ok"){
+        return;
+     }
+     var list = "";
+     for (var i=0; i < rsp.photos.photo.length; i++) {
+         var photo    = rsp.photos.photo[i];
+         var imgUrl   = 'http://farm'+ photo.farm +'.static.flickr.com/'+ photo.server +'/'+ photo.id +'_'+ photo.secret +'_m.jpg';
+         var photoUrl = 'http://www.flickr.com/photos/'+ flickrNickname +'/'+ photo.id;
+         list += '<li id="flickrItem_'+i+'"><a href="'+ photoUrl +'" title="'+ photo.title +'"><img alt="'+ photo.title +'" src="'+ imgUrl +'" /></a></li>';
+     }
+     list += '<li class="flickrLink"><a href="http://www.flickr.com/photos/'+ flickrNickname + '">Flickr page</a></li>';
+     document.getElementById('flickr').innerHTML = list;
+}
+</script>
+<script lang="Javascript" src="http://api.flickr.com/services/rest/?format=json&method=flickr.photos.search&user_id=59867780@N04&per_page=5&api_key=59bddff8d357f363307238fa34f9c9ea"></script>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Alistair Stead -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+<img class="right" src="/images/greyscale-logo.png">
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'designdisclosurecom';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation/';
+        var disqus_url = 'http://alistairstead.github.com/2009/01/sfpokayokeplugin-symfony-client-side-validation/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Capistrano | Design Disclosure - Portfolio & Personal Blog of Alistair Stead]]></title>
+  <link href="http://alistairstead.github.com/blog/categories/capistrano/atom.xml" rel="self"/>
+  <link href="http://alistairstead.github.com/"/>
+  <updated>2012-08-19T22:21:38+01:00</updated>
+  <id>http://alistairstead.github.com/</id>
+  <author>
+    <name><![CDATA[Alistair Stead]]></name>
+    <email><![CDATA[alistair.stead@designdisclosure.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Deploy Magento with Capistrano]]></title>
+    <link href="http://alistairstead.github.com/2012/04/deploy-magento-with-capistrano/"/>
+    <updated>2012-04-11T23:46:00+01:00</updated>
+    <id>http://alistairstead.github.com/2012/04/deploy-magento-with-capistrano</id>
+    <content type="html"><![CDATA[<p>So you have a Magento project and there must be a better way than you currently have to deploy your code to a server? Well there are many ways to do this from FTP/SFTP, rsync or SCM checkouts. You could even build a package and deploy using a package manager. However there is one options that from experience fits all eventualities and can be turned into a repeatable process where you don't have to remember a list of manual steps. It can even have inbuilt functionality to revert a deployment if for some reason you need to.</p>
+
+<h2>What would we like from a deployment system</h2>
+
+<ul>
+<li>Fast deployment.</li>
+<li>Repeatable process.</li>
+<li>Remove all manual steps or tasks.</li>
+<li>Easy and quick roll back to a previous state.</li>
+<li>Simple to use once setup.</li>
+</ul>
+
+
+<h2>Extra credits</h2>
+
+<ul>
+<li>Extensible to cover your specific needs.</li>
+<li>Work across a cluster of servers .</li>
+<li>Work across servers with different roles for the application.</li>
+</ul>
+
+
+<p><span class='pullquote-right' data-pullquote='Capistrano - provides all of the features we are looking for, plus all the extra credit features and more.'>
+Capistrano originally developed to deploy Ruby on Rails applications has evolved through a number of iterations to become a general purpose deployment tool that can be used for deploying any type of code base or packaged application. Capistrano - provides all of the features we are looking for, plus all the extra credit features and more. It has been used for many projects and is tried and trusted in the PHP community too. You will find many existing Capistrano scripts or pre-packaged Gems that provide functionality to deploy specific PHP applications and to deal with their specific requirements including Magentify.
+</span></p>
+
+<!--more-->
+
+
+<h2>Magentify</h2>
+
+<p>I have created a specific Gem extension to Capistrano that will provide the specific functionality you need to deploy a Magento project with Capistrano. This can be easily installed and configured to you exact deployment requirements.</p>
+
+<h3>Prerequisites</h3>
+
+<ol>
+<li>You must have SSH access to each of the machines you will be deploying to.</li>
+<li>You must have the same user and password on each of these machines but ideally you will have an SSH Key setup to provide access.</li>
+</ol>
+
+
+<h3>Install</h3>
+
+<p>To use Capistrano it needs to be installed on a single machine. The machine that will be running the deployment. For my personal projects that is my laptop but for work projects we have a central deployment server that is all setup for this purpose.</p>
+
+<pre><code>$ gem install capistrano
+$ gem install magentify
+</code></pre>
+
+<p><strong><em>You may need to add <code>sudo</code> to these install commands depending upon your user and access levels.</em></strong></p>
+
+<h3>Magentify your Magento project</h3>
+
+<p>Although you can use an alternate structure by modifying the paths in the generated configuration file. I prefer to use a directory structure that allows me to keep my project tools within a project codebase. Maintaining them in source control but outside of the public document root and away from harm. This article is written with the assumption that your code repository looks something like this but you are free to use the structure that suite you:</p>
+
+<pre><code>.
+├── README.md
+├── public # This is our Magento src code and eventual web server doc root
+│   ├── LICENSE.html
+│   ├── LICENSE.txt
+│   ├── LICENSE_AFL.txt
+│   ├── RELEASE_NOTES.txt
+│   ├── app
+│   ├── cron.php
+│   ├── cron.sh
+│   ├── downloader
+│   ├── errors
+│   ├── favicon.ico
+│   ├── get.php
+│   ├── includes
+│   ├── index.php
+│   ├── index.php.sample
+│   ├── install.php
+│   ├── js
+│   ├── lib
+│   ├── mage
+│   ├── media
+│   ├── php.ini.sample
+│   ├── shell
+│   ├── skin
+│   └── var
+└── tools
+    ├── capistrano # This is where we will create our Capistrano scripts
+    ├── chef
+    └── vagrant
+</code></pre>
+
+<p>Run the following command to initialize your project with the base Magento specific Capistrano configuration that we will update to your specific requirements.</p>
+
+<pre><code>$ cd tools/capistrano
+$ magentify .
+</code></pre>
+
+<p>This will generate the following files:</p>
+
+<pre><code>.
+├── capistrano
+│   ├── Capfile
+│   └── config
+│       └── deploy.rb
+</code></pre>
+
+<p>In order to configure and customize the deployment to your specific needs you will need to edit <code>deploy.rb</code></p>
+
+<p>``` ruby deploy.rb
+set :application, "set your application name here"
+set :domain,      "#{application}.com"
+set :deploy_to,   "/var/www/#{domain}"</p>
+
+<p>set :repository,  "git@github.com:/user_name/#{application}.git" # Enter the path to your SCM repository e.g. Github
+set :scm,         :git</p>
+
+<h1>Or: <code>accurev</code>, <code>bzr</code>, <code>cvs</code>, <code>darcs</code>, <code>subversion</code>, <code>mercurial</code>, <code>perforce</code>, <code>subversion</code> or <code>none</code></h1>
+
+<p>role :web, 111.111.111.111   # Your HTTP server, Apache/etc
+role :app, 111.111.111.111   # This may be the same as your <code>Web</code> server or a separate administration server</p>
+
+<p>set  :keep_releases,  3</p>
+
+<h1>Turn off use of sudo if your user does not need elevated permissions</h1>
+
+<p>set :use_sudo, false</p>
+
+<p>set :app_symlinks, ["public/media", "public/var", "public/sitemaps", "public/staging"]
+set :app_shared_dirs, ["public/app/etc", "public/sitemaps", "public/media", "public/var", "public/staging"]
+set :app_shared_files, ["public/app/etc/local.xml"]
+```</p>
+
+<p>Once you have configured the details of your application and the servers you wish to deploy your code to you can run the Capsitrano commands. You should run the Capistrano commands from the <code>tools/capistrano</code> directory so that the configuration you have created will be used.</p>
+
+<h3>Configure your servers</h3>
+
+<p>For full details of the options you can use in the configuration file it might be worth reading <a href="https://github.com/capistrano/capistrano/wiki/2.x-Getting-Started">Capistrano Getting Started</a> or if you have time a slightly longer article that will cover all of your questions, <a href="https://github.com/capistrano/capistrano/wiki/2.x-From-The-Beginning">Capistrano from the Beginning</a>.</p>
+
+<h4>Hosts</h4>
+
+<p>Capistrano is designed specifically to deploy to many servers. It can deploy code to 1 to 'n' servers with minimal configuration. In the configuration above we are deploying to two servers one public web server and one admin server. If you need to deploy to more servers you simply need to add config lines for each of the additional servers.</p>
+
+<p><code>ruby deploy.rb
+role :web, 111.111.111.101   # Web server 1
+role :web, 111.111.111.102   # Web server 2
+role :web, 111.111.111.103   # Web server 3
+role :web, 111.111.111.104   # Web server 4
+role :app, 111.111.111.110   # Database and administration server
+</code></p>
+
+<h4>Roles</h4>
+
+<p>You don't simply have to deploy code to all of your servers in your cluster. You can define and configure roles applied to your servers so that the correct actions are carried out on each of the servers when you run your deployment tasks.</p>
+
+<h4>SCM</h4>
+
+<p>Capistrano will integrate directly with your preferred source control system. It has specific features for each system providing alternate strategies to limit the amount of data that is transferred.</p>
+
+<p><code>ruby deploy.rb
+set :repository,  "git@github.com:/user_name/magento_application.git"
+set :scm,         :git
+</code></p>
+
+<h3>Setup</h3>
+
+<p>The first task you should run is the <code>deploy:setup</code> this will connect to each of the servers you configured in the previous steps. For those servers with roles that should include a code checkout it will create a set of directories into which your code will be checked out.</p>
+
+<pre><code>$ cap deploy:setup
+</code></pre>
+
+<p>You can then run <code>deploy:check</code> to confirm that each of the servers you configured previously have all of the prerequisite software, access and setting to complete the code checkout and all of the deployment tasks.</p>
+
+<pre><code>$ cap deploy:check
+</code></pre>
+
+<h3>Deploy</h3>
+
+<p>Once you are ready to deploy your code to the server(s) you can run the default <code>deploy</code> task. This will connect to each of the servers you have configured and create a new release of your application code on the server. Once all of the servers have the complete version of the code and a synchronized, the symlink for the current release will be updated. This final step takes milliseconds, meaning that this deployment can be run on production servers and in most cases users will not see the deployment happen as it is so quick and ensures not users can access an incomplete release.</p>
+
+<pre><code>$ cap deploy
+</code></pre>
+
+<p>Files that are located within the shared directory e.g. <code>local.xml</code> configuration or uploaded images are maintained between releases. Images uploaded by users should not be maintained in source control so it is key that they are kept in a safe location not changed between releases.</p>
+
+<h3>Roll Back</h3>
+
+<p>The previous releases of the application code are maintained on the servers so if you need to revert to a previous version for some reason you can simply roll back the deployment. This a quick and repeatable process that means you always have a rollback for each deployment. A safety net included with each deployment has to be a good thing right?</p>
+
+<pre><code>$ cap deploy:rollback
+</code></pre>
+
+<h3>Cleanup</h3>
+
+<p>If you want to clean up all these past releases and only keep the last five releases, you can run the cleanup command and automatically remove the older files.</p>
+
+<pre><code>$ cap deploy:cleanup
+</code></pre>
+
+<h3>Magento Tasks</h3>
+
+<p>The Magentify scripts provide additional tasks that can be run on the servers. These tasks provide access to run a number of remote tasks that are specific to Magento. To see the full list of available tasks you can run the following command.</p>
+
+<pre><code>$ cap -T
+</code></pre>
+
+<p>You can see the Magento specific tasks in the <code>magento</code> namespace.</p>
+
+<h4>Maintenance Page</h4>
+
+<p>If you need to place the maintenance page on one or more of your servers you can use the extended Capistrano task:</p>
+
+<pre><code>$ cap mage:disable
+</code></pre>
+
+<p>The will create a <code>maintenance.flag</code> file in the document root of your magento store. Once in place magento will route all traffic through the 503 error page that you can theme to your specific needs. This will prevent access to any part of your magento store including the admin.</p>
+
+<p><em>You can of course customise this behaviour to meet your needs or to provide access from your specific IP address.</em></p>
+
+<p>To remove the maintenance page and allow general customers to access your store again. Run the following Capistrano command:</p>
+
+<pre><code>$ cap mage:enable
+</code></pre>
+
+<h4>Clear Cache</h4>
+
+<p>This command currently clears the Magento file based cache but can be extended to clear the specific cache system you are using with your installation.</p>
+
+<pre><code>$ cap mage:cc
+</code></pre>
+
+<h4>Compiler</h4>
+
+<p>The compiler commands provide a mechanism to enable and disable the Magento compiler. There is also a step in deployment that will compile Magento on each deployment.</p>
+
+<pre><code>$ cap mage:enable_compiler
+
+$ cap mage:disable_compiler
+</code></pre>
+
+<h4>Indexes</h4>
+
+<p>The indexer command will run the Magento indexers using the shell script. This will populate the index tables following any data changes during deployment.</p>
+
+<pre><code>$ cap mage:indexer
+</code></pre>
+
+<h3>What next?</h3>
+
+<p>You can extend the script to include your own specific requirements. You will find a wealth of information available to you about <a href="https://github.com/capistrano/capistrano/wiki">Capistrano</a> and creating custom tasks.</p>
+
+<p><span class='pullquote-right' data-pullquote='be careful giving your clients the tools to make bad things happen.'>
+If you want to add a GUI to your deployment so that none technical people can run the deployment processes or any of the additional tasks that you make available however, be careful giving your clients the tools to make bad things happen. Tool such as <a href="https://github.com/peritor/webistrano/wiki">Webistrano</a> or <a href="https://github.com/joelmoss/strano">Strano</a> provide a graphical interface on top of the command line functionality of Capistrano.
+</span></p>
+
+<p>This is an open source project feel free to <a href="https://github.com/alistairstead/Magentify/fork_select">fork</a> the code and extend it with new features. Just send me pull requests and I will integrate them with the project. If you don't have the time to create the features then <a href="https://github.com/alistairstead/Magentify/issues">submit feature requests</a> and maybe the community can help.</p>
+]]></content>
+  </entry>
+  
+</feed>

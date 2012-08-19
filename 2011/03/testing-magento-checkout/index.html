@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Design Disclosure - Portfolio & Personal Blog of Alistair Stead</title>
+  <title>Testing Magento Checkout - Design Disclosure - Portfolio & Personal Blog of Alistair Stead</title>
   <meta name="author" content="Alistair Stead">
 
   
-  <meta name="description" content="So you have a Magento project and there must be a better way than you currently have to deploy your code to a server? Well there are many ways to do &hellip;">
+  <meta name="description" content="While developing new functionality in Magento one of the key elements that you must ensure continues to work as expected is the checkout. After all &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://alistairstead.github.com">
+  <link rel="canonical" href="http://alistairstead.github.com/2011/03/testing-magento-checkout">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -74,182 +74,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/2012/04/deploy-magento-with-capistrano/">Deploy Magento With Capistrano</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-
-  
-<time datetime="2012-04-11T23:46:00+01:00" pubdate data-updated="true">Apr 11<span>th</span>, 2012</time>
-        
-         | <a href="/2012/04/deploy-magento-with-capistrano/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>So you have a Magento project and there must be a better way than you currently have to deploy your code to a server? Well there are many ways to do this from FTP/SFTP, rsync or SCM checkouts. You could even build a package and deploy using a package manager. However there is one options that from experience fits all eventualities and can be turned into a repeatable process where you don&#8217;t have to remember a list of manual steps. It can even have inbuilt functionality to revert a deployment if for some reason you need to.</p>
-
-<h2>What would we like from a deployment system</h2>
-
-<ul>
-<li>Fast deployment.</li>
-<li>Repeatable process.</li>
-<li>Remove all manual steps or tasks.</li>
-<li>Easy and quick roll back to a previous state.</li>
-<li>Simple to use once setup.</li>
-</ul>
-
-
-<h2>Extra credits</h2>
-
-<ul>
-<li>Extensible to cover your specific needs.</li>
-<li>Work across a cluster of servers .</li>
-<li>Work across servers with different roles for the application.</li>
-</ul>
-
-
-<p><span class='pullquote-right' data-pullquote='Capistrano - provides all of the features we are looking for, plus all the extra credit features and more.'>
-Capistrano originally developed to deploy Ruby on Rails applications has evolved through a number of iterations to become a general purpose deployment tool that can be used for deploying any type of code base or packaged application. Capistrano - provides all of the features we are looking for, plus all the extra credit features and more. It has been used for many projects and is tried and trusted in the PHP community too. You will find many existing Capistrano scripts or pre-packaged Gems that provide functionality to deploy specific PHP applications and to deal with their specific requirements including Magentify.
-</span></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/2012/04/deploy-magento-with-capistrano/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/2012/02/updated-blog/">Updated Blog</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-13T17:41:00+00:00" pubdate data-updated="true">Feb 13<span>th</span>, 2012</time>
-        
-         | <a href="/2012/02/updated-blog/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>It has been an absolute age since I last created any new content for this blog. The main reason has been simply that I have been very very busy doing other things. However it is also that due to the fact that creating content through a browser and storing it in a database just did not fit with the way I work.</p>
-
-<p>I spend most of my day working in a terminal window. I choose a text editor over an IDE, speed and flexibility over features. Okay I don&#8217;t go all the way back to basics I use <a href="http://blog.macromates.com/2011/textmate-2-0-alpha/">TextMate</a> and <a href="http://www.iterm2.com/">iTerm</a> with <a href="http://www.zsh.org/">ZSH</a> and <a href="https://github.com/robbyrussell/oh-my-zsh">oh-my-zsh</a>. All of these things let me work in the simplest most flexible way.</p>
-
-<p>My blog on the other hand always felt restrictive. So after some conversation on twitter /cc @mpmlopes @__debo I spent a couple of hours over the weekend making the leap to <a href="http://octopress.org/">octopress</a>. Although not loaded with features this lets me create content in the simplest format, markdown in this case and using Git and some Ruby it is baked into a static blog hosted on <a href="http://github.com/">Github</a> using Github pages.</p>
-
-<p>As you can see this has allowed me to create new content. Okay it is just an &#8216;Updated Blog&#8217; statement but it is a statement of more to come. Some of what has been keeping me busy for the last 12 months should be good enough to create new posts.</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/2011/03/package-and-install-your-latest-magento-1-5-extension/">Package and Install Your Latest Magento 1.5+ Extension</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-03-26T21:40:00+00:00" pubdate data-updated="true">Mar 26<span>th</span>, 2011</time>
-        
-         | <a href="/2011/03/package-and-install-your-latest-magento-1-5-extension/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>After spending many hours crafting the perfect Magento module you need to package it either for easy distribution to your client/team or to upload to Magento Connect.</p>
-
-<h2>Package the extension</h2>
-
-<p>First of all I would recommend reading the following wiki page;</p>
-
-<ul>
-<li><a href="http://www.magentocommerce.com/wiki/7_-_magento_connect/packaging_a_magento_extension_in_1.5">Packaging a Magento Extension in 1.5+</a></li>
-</ul>
-
-
-<p><strong>Note - If your planning to upload your module to Magento Connect ensure the package name and the name you enter on Magento Connect match</strong></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/2011/03/package-and-install-your-latest-magento-1-5-extension/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/2011/03/testing-magento-checkout/">Testing Magento Checkout</a></h1>
+      <h1 class="entry-title">Testing Magento Checkout</h1>
     
     
       <p class="meta">
@@ -267,14 +97,14 @@ Capistrano originally developed to deploy Ruby on Rails applications has evolved
 
 <time datetime="2011-03-15T18:40:00+00:00" pubdate data-updated="true">Mar 15<span>th</span>, 2011</time>
         
-         | <a href="/2011/03/testing-magento-checkout/#disqus_thread">Comments</a>
+         | <a href="#disqus_thread">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>While developing new functionality in Magento one of the key elements that you must ensure continues to work as expected is the checkout. After all an commerce website that can not trade is rather worthless.</p>
+<div class="entry-content"><p>While developing new functionality in Magento one of the key elements that you must ensure continues to work as expected is the checkout. After all an commerce website that can not trade is rather worthless.</p>
 
 <p>Using <a title="Mage-Test" href="http://github.com/alistairstead/Mage-Test">Mage-Test</a> you can easily create integration tests for the checkout process. This will allow you to ensure that your store still functions correctly after you have made any modifications.</p>
 
@@ -529,76 +359,16 @@ Capistrano originally developed to deploy Ruby on Rails applications has evolved
 
 <p>You can use a <a title="PHPUnit" href="https://github.com/sebastianbergmann/phpunit/">PHPUnit</a> data provider to supply a set of data fixtures to be used for credit card numbers, address information and other values. Using a data provider you can test for not only the successful checkout but also the error handling within the checkout process.</p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/2011/02/magetool-update-v0-3-0/">MageTool Update v0.3.0</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
   
 
+<span class="byline author vcard">Posted by <span class="fn">Alistair Stead</span></span>
 
-<time datetime="2011-02-09T14:27:00+00:00" pubdate data-updated="true">Feb 9<span>th</span>, 2011</time>
-        
-         | <a href="/2011/02/magetool-update-v0-3-0/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>While at Magento Imagine I have used the time where I was awake due to jet lag to finish a couple of new features to <a title="MageTool" href="http://www.magetool.co.uk/" target="_blank">MageTool</a>.</p>
-
-<p>MageTool v0.3.0 now includes:</p>
-
-<ul>
-<li>Improved feedback when running commands for mage-core-resource</li>
-<li>Added commands to query and run the Magento indexer</li>
-<li>Added commands to query and run the Magento compiler</li>
-<li>Improved mage-core-cache commands</li>
-<li>Added functionality to run individual module setup classes directly</li>
-<li>Added functionality to dispatch Magento events to test your observers</li>
-</ul>
-
-
-<p>All of these commands are intended to make development of Magento extensions easier and more streamlined. If you have feature requests please let me know. Or if you wish feel free to fork the <a title="MageTool on Github" href="https://github.com/alistairstead/MageTool">project on GitHub</a> and add the command that you need.</p>
-
-<p>If you find and bugs with MageTool please raise a ticket on <a title="MageTool bug tracker" href="https://github.com/alistairstead/MageTool/issues">GitHub</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/2010/10/magento-command-line-tools-magetool/">Magento Command Line Tools MageTool</a></h1>
-    
-    
-      <p class="meta">
-        
 
 
 
@@ -610,335 +380,48 @@ Capistrano originally developed to deploy Ruby on Rails applications has evolved
   
 
 
-<time datetime="2010-10-10T00:05:00+01:00" pubdate data-updated="true">Oct 10<span>th</span>, 2010</time>
-        
-         | <a href="/2010/10/magento-command-line-tools-magetool/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>If you have spent any time developing with Magento I expect that like me you have found a number of tasks you find yourself repeating many many times. While developing new modules or themes there are many times when you need to clear the Magento cache or even disable it completely. Now of course you can log into the admin system and carry out these actions but have you every thought there must be an easier way?</p>
-
-<p>Many development frameworks or other open source projects have tool that can be used by developers to issue commands quickly and easily. Magento however does not have any built in tools to improve the development workflow. This is where MageTool fits in!</p>
-
-<h2>MageTool</h2>
-
-<p>How can <a href="http://github.com/alistairstead/MageTool">MageTool</a> help? Well hopefully in a number of ways. MageTool extends the existing Zend Framework command line tool zf, adding new commands that are specific to Magento development workflow. Rather then navigating the Magento admin system to clear cache or the enable or disable caching you can issue a simple command in your terminal window and achieve the same results. You can also modify the Magento configuration quickly or issue commands that will selectively update many configuration values.</p>
-
-<p>In my standard development practices I maintain a number of Magento installs on different servers. These are used for Development, Staging and UAT each using different domains to access the stores. This means however that I often need to move databases between servers, resulting in the ‘base_url’ configuration being incorrect. This can be easily updated if you have database access and is fairly simple if you only have a couple of sites setup. However if you have more sites setup this can become very very difficult to maintain and calls into question the idea of working with many environment servers during development.</p>
-
-<p>MageTool can help again in any situation where you need to move a Magento install and then update the ‘base_url’ configuration. You can construct a command that will quickly and easily update all URLs in the Magento config.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/2010/10/magento-command-line-tools-magetool/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
+<time datetime="2011-03-15T18:40:00+00:00" pubdate data-updated="true">Mar 15<span>th</span>, 2011</time>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/2009/11/symfony-apc-cache-and-memcache-session-storage/">Symfony APC Cache and Memcache Session Storage</a></h1>
-    
-    
-      <p class="meta">
-        
 
-
-
-
-
-
-
-
+<span class="categories">
   
+    <a class='category' href='/blog/categories/magetest/'>MageTest</a>, <a class='category' href='/blog/categories/magento/'>Magento</a>, <a class='category' href='/blog/categories/php/'>PHP</a>
+  
+</span>
 
 
-<time datetime="2009-11-30T23:22:00+00:00" pubdate data-updated="true">Nov 30<span>th</span>, 2009</time>
-        
-         | <a href="/2009/11/symfony-apc-cache-and-memcache-session-storage/#disqus_thread">Comments</a>
-        
-      </p>
+    </p>
     
-  </header>
-
-
-  <div class="entry-content"><p><img src="/images/posts/symfony-memcache.jpg" title="'symfony memcache'" ></p>
-
-<p>In a previous post I described some of the reasons why you would want to store your session data in an alternate location to temporary files on your server. I explained the<a title="symfony Doctrine database session storage" href="/2009/11/symfony-doctri…ession-storage/"> setup of database session storage using Doctrine</a> and how this would allow you to take advantage of storing session data in a database. However depending upon your application requirements storing your session data in a database may cause excessive load on you database. You could of course use a separate dedicated database server to store your session data. However there is an alternate setup that will allow you to centralise your session storage ready for horizontal scaling of your hosting e.g. adding additional web servers.</p>
-
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://alistairstead.github.com/2011/03/testing-magento-checkout/" data-via="alistairstead" data-counturl="http://alistairstead.github.com/2011/03/testing-magento-checkout/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/2009/11/symfony-apc-cache-and-memcache-session-storage/">Read on &rarr;</a>
-    </footer>
-  
 
-
-    </article>
-  
-  
-    <article>
+    
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/2009/11/symfony-doctrine-database-session-storage/">Symfony Doctrine Database Session Storage</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2009-11-30T22:23:00+00:00" pubdate data-updated="true">Nov 30<span>th</span>, 2009</time>
-        
-         | <a href="/2009/11/symfony-doctrine-database-session-storage/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Sessions are normally managed by your server and depending upon how involved you get with the PHP setup you need never know how this data is stored. The default setup for PHP is to store session data in temporary files on the server. So why would we want to change how sessions are handled and what advantage can we gain from any changes we make.</p>
-
-<h2>Why use database session management?</h2>
-
-<p>Sessions allow you maintain persistence within PHP applications. With every HTTP request a PHP application must re-assign every variable and object needed in your application. Sessions allow you to store data that is required to persist past each HTTP request allowing it to be easily retrieved and used.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/2009/11/symfony-doctrine-database-session-storage/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
+        <a class="basic-alignment left" href="/2011/02/magetool-update-v0-3-0/" title="Previous Post: MageTool Update v0.3.0">&laquo; MageTool Update v0.3.0</a>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/2009/11/yui-connect-asynchronous-file-uploads/">YUI Connect Asynchronous File Uploads</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2009-11-23T14:26:00+00:00" pubdate data-updated="true">Nov 23<span>rd</span>, 2009</time>
-        
-         | <a href="/2009/11/yui-connect-asynchronous-file-uploads/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I&#8217;m sure the problems with multi-part data that I have been working through this morning is very simple but there are a number of forum posts about this, so I will share my findings. When using YUI Connection Manager in conjunction with multi-part form data I have experienced problems creating the asynchronous request and canceling the form submission. Even after setting up the request and callback object and checking the YUI API repeatedly the problem resides elsewhere.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">addListener</span><span class="p">(</span><span class="nx">forms</span><span class="p">,</span> <span class="s1">&#39;submit&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">_onFormSubmit</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
-</span><span class='line'><span class="nx">_onFormSubmit</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">YAHOO</span><span class="o">&gt;</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">(</span><span class="nx">e</span><span class="p">);</span>
-</span><span class='line'>    <span class="c1">// Set the form  YAHOO.util.Connect.setForm(e.currentTarget);</span>
-</span><span class='line'>    <span class="c1">// Configure the callback object</span>
-</span><span class='line'>    <span class="nx">callBackObj</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>        <span class="nx">success</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateComplete</span><span class="p">,</span>
-</span><span class='line'>        <span class="nx">failure</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateFailed</span><span class="p">,</span>
-</span><span class='line'>        <span class="nx">argument</span><span class="o">:</span> <span class="p">{</span>
-</span><span class='line'>            <span class="nx">objType</span><span class="o">:</span> <span class="nx">objType</span><span class="p">,</span>
-</span><span class='line'>            <span class="nx">region</span><span class="o">:</span> <span class="nx">regionObj</span><span class="p">,</span>
-</span><span class='line'>            <span class="nx">mode</span><span class="o">:</span> <span class="nx">submitbutton</span><span class="p">.</span><span class="nx">value</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="c1">// Make the request</span>
-</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Connect</span><span class="p">.</span><span class="nx">asyncRequest</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">currentTarget</span><span class="p">.</span><span class="nx">action</span><span class="p">,</span> <span class="nx">callBackObj</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>With non multi-part forms you can hijack the submit event of the form and create an asynchronous request. However once you try with multi-part data no matter how you set this up and attempt to cancel the form submit action the form will still make an HTTP request in the main window.</p>
-
-<h2>The YUI Multi-Part Data Solution</h2>
-
-<p>The solution is very simple once you find it but it is easy to overlook! In order to use YUI connect to create an asynchronous request you must remove the &#8216;submit&#8217; button and replace it with a &#8216;button&#8217; then assign it an eventListener that will create the asyncRequest.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">alternateButton</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;alternateButtonId&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">addListener</span><span class="p">(</span><span class="nx">alternateButton</span><span class="p">,</span> <span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">_onFormSubmit</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
-</span><span class='line'><span class="nx">_onFormSubmit</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">(</span><span class="nx">e</span><span class="p">);</span>
-</span><span class='line'>    <span class="c1">// Set the form</span>
-</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Connect</span><span class="p">.</span><span class="nx">setForm</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">currentTarget</span><span class="p">);</span>
-</span><span class='line'>    <span class="c1">// Configure the callback object</span>
-</span><span class='line'>    <span class="nx">callBackObj</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>        <span class="nx">success</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateComplete</span><span class="p">,</span>
-</span><span class='line'>        <span class="nx">failure</span><span class="o">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">_loadRemoteFormSubmissionTemplateFailed</span><span class="p">,</span>
-</span><span class='line'>        <span class="nx">argument</span><span class="o">:</span> <span class="p">{</span>
-</span><span class='line'>            <span class="nx">objType</span><span class="o">:</span> <span class="nx">objType</span><span class="p">,</span>
-</span><span class='line'>            <span class="nx">region</span><span class="o">:</span> <span class="nx">regionObj</span><span class="p">,</span>
-</span><span class='line'>            <span class="nx">mode</span><span class="o">:</span> <span class="nx">submitbutton</span><span class="p">.</span><span class="nx">value</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="c1">// Make the request</span>
-</span><span class='line'>    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Connect</span><span class="p">.</span><span class="nx">asyncRequest</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">currentTarget</span><span class="p">.</span><span class="nx">action</span><span class="p">,</span> <span class="nx">callBackObj</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>When trying to use multi-part data YUI Connection Manager will create an iframe in the document that your form will submit the data to. If you try and use the submit handler YUI currently does not change the target value of the submit event.</p>
-
-<p>The YUI examples do all show the use of alternate buttons rather than a standard submit button however it can be easily overlooked. I hope this helps someone!</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/">Propel doUpdate Update Multiple Records in a Single Statement</a></h1>
-    
-    
-      <p class="meta">
-        
+        <a class="basic-alignment right" href="/2011/03/package-and-install-your-latest-magento-1-5-extension/" title="next Post: Package and Install your latest Magento 1.5+ extension">Package and Install your latest Magento 1.5+ extension &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
 
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2009-10-08T20:59:00+01:00" pubdate data-updated="true">Oct 8<span>th</span>, 2009</time>
-        
-         | <a href="/2009/10/propel-doupdate-update-multiple-records-in-a-single-statement/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I&#8217;ve been very busy with a number of project launches lately. While working on a little problem today I re-discovered a little gem for use with Propel to update multiple rows in a single statement, rather than iterating through a collection updating and saving each object in turn.</p>
-
-<p>This task is simple in SQL but after a while using any abstraction layer you may find like me you forget about the simple solutions as you spend you day working with complex objects and trying to hydrate custom objects. Blah blah blah&#8230;</p>
-
-<p>The complex solution to a simple problem:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="cp">&lt;?php</span>
-</span><span class='line'><span class="c1">// Obtain the connection configured</span>
-</span><span class='line'><span class="nv">$conn</span> <span class="o">=</span> <span class="nx">Propel</span><span class="o">::</span><span class="na">getConnection</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">DATABASE_NAME</span><span class="p">);</span>
-</span><span class='line'><span class="c1">// Create a Criteria object that will select the correct rows from the database</span>
-</span><span class='line'><span class="nv">$selectCriteria</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Criteria</span><span class="p">();</span>
-</span><span class='line'><span class="nv">$selectCriteria</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">COLUMB_TO_SELECT</span><span class="p">,</span> <span class="s1">&#39;value_to_match&#39;</span><span class="p">);</span>
-</span><span class='line'><span class="c1">// Create a Criteria object includes the value you want to set</span>
-</span><span class='line'><span class="nv">$updateCriteria</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Criteria</span><span class="p">();</span>
-</span><span class='line'><span class="nv">$updateCriteria</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nx">YourObjectPeer</span><span class="o">::</span><span class="na">COLUMB_TO_CHANGE</span><span class="p">,</span> <span class="s1">&#39;value_to_be_set&#39;</span><span class="p">);</span>
-</span><span class='line'><span class="c1">// Execute the query</span>
-</span><span class='line'><span class="nx">BasePeer</span><span class="o">::</span><span class="na">doUpdate</span><span class="p">(</span><span class="nv">$selectCriteria</span><span class="p">,</span> <span class="nv">$updateCriteria</span><span class="p">,</span> <span class="nv">$conn</span><span class="p">);</span>
-</span><span class='line'><span class="cp">?&gt;</span><span class="x"></span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Thats it! I hope it helps&#8230;</p>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
-  
-  
+  </section>
 
-
-    </article>
-  
-  <div class="pagination">
-    
-      <a class="prev" href="/blog/page/2/">&larr; Older</a>
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
 </div>
+
 <aside class="sidebar">
   
     <section>
@@ -973,7 +456,7 @@ Capistrano originally developed to deploy Ruby on Rails applications has evolved
 <section>
   <h1>Latest Tweets</h1>
   <ul id="tweets">
-    <li class="loading">Status updating&#8230;</li>
+    <li class="loading">Status updating...</li>
   </ul>
   <script type="text/javascript">
     $.domReady(function(){
@@ -1000,7 +483,7 @@ Capistrano originally developed to deploy Ruby on Rails applications has evolved
 <section>
 <h1>Flickr</h1>
 <ul id="flickr">
-    <li class="loading">Flickr updating&#8230;</li>
+    <li class="loading">Flickr updating...</li>
 </ul>
 <script lang="Javascript">
 var flickrNickname = "alistairstead";
@@ -1025,6 +508,7 @@ function jsonFlickrApi(rsp) {
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -1040,7 +524,10 @@ function jsonFlickrApi(rsp) {
       var disqus_shortname = 'designdisclosurecom';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://alistairstead.github.com/2011/03/testing-magento-checkout/';
+        var disqus_url = 'http://alistairstead.github.com/2011/03/testing-magento-checkout/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
